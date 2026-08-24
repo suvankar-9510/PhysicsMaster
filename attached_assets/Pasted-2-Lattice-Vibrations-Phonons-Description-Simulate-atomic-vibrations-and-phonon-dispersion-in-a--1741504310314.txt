@@ -1,0 +1,183 @@
+2. Lattice Vibrations (Phonons)
+
+Description: Simulate atomic vibrations and phonon dispersion in a crystal.
+Interactivity:
+Choose 1D chain or 3D lattice (e.g., NaCl structure).
+Adjust temperature (0–1000 K) and atomic mass (e.g., 1–100 amu).
+Select phonon mode (longitudinal/transverse).
+Visualization:
+Animate 3D lattice vibrations with exaggerated displacements.
+Plot 3D phonon dispersion curves (frequency vs. wavevector) in real-time.
+Overlay density of states (DOS) graph.
+Math Backend:
+Solve 1D/3D harmonic oscillator equations: 
+ω
+=
+k
+m
+ω= 
+m
+k
+​	
+ 
+​	
+  (k = spring constant, m = mass).
+Use finite difference methods for dispersion relations in 3D.
+Educational Goal: Connect thermal properties to lattice dynamics.
+3. Electronic Band Structures
+
+Description: Model energy bands and bandgaps in solids.
+Interactivity:
+Select material (e.g., Si, Ge, GaAs) or custom tight-binding model.
+Adjust lattice spacing or potential strength.
+Toggle between direct and indirect bandgap modes.
+Visualization:
+Plot 3D band structure (E vs. k) along high-symmetry paths (e.g., Γ-X-L).
+Animate electron wavefunctions in 3D for selected k-points (MSc level).
+Highlight Fermi level and bandgap dynamically.
+Math Backend:
+Implement simplified tight-binding Hamiltonian: 
+H
+=
+−
+t
+∑
+⟨
+i
+,
+j
+⟩
+(
+c
+i
+†
+c
+j
++
+h
+.
+c
+.
+)
+H=−t∑ 
+⟨i,j⟩
+​	
+ (c 
+i
+†
+​	
+ c 
+j
+​	
+ +h.c.).
+Solve eigenvalue problem for energy dispersion.
+Educational Goal: Understand electronic properties and conductivity.
+4. Semiconductors
+
+Description: Simulate carrier behavior in doped semiconductors.
+Interactivity:
+Choose doping type (n-type, p-type) and concentration (10¹⁴–10¹⁸ cm⁻³).
+Adjust temperature and applied electric field.
+Visualization:
+Animate 3D motion of electrons/holes in a crystal lattice.
+Plot 3D carrier density and Fermi level shift.
+Display IV curve for a pn-junction.
+Math Backend:
+Use Boltzmann approximation for carrier density: 
+n
+=
+N
+c
+e
+−
+E
+c
+−
+E
+F
+k
+T
+n=N 
+c
+​	
+ e 
+− 
+kT
+E 
+c
+​	
+ −E 
+F
+​	
+ 
+​	
+ 
+ .
+Solve drift-diffusion equations for current.
+Educational Goal: Explore doping effects and device physics.
+5. Superconductivity
+
+Description: Demonstrate superconducting properties.
+Interactivity:
+Adjust temperature (0–T_c) and magnetic field strength (0–H_c).
+Select material (e.g., Type-I: Pb, Type-II: NbTi).
+Visualization:
+Animate 3D Meissner effect (expulsion of magnetic field lines).
+Plot 3D critical field vs. temperature curve.
+Show Cooper pair formation conceptually (MSc level).
+Math Backend:
+Model critical temperature with BCS theory basics: 
+T
+c
+∝
+e
+−
+1
+N
+(
+0
+)
+V
+T 
+c
+​	
+ ∝e 
+− 
+N(0)V
+1
+​	
+ 
+ .
+Simulate magnetic penetration depth.
+Educational Goal: Grasp zero resistance and magnetic behavior.
+Additional Features
+
+UI Layout:
+Sidebar: Select simulation (e.g., “Band Structure”).
+Main Panel: 3D visualization + control sliders.
+Bottom Panel: Graphs (e.g., DOS, dispersion) and equations.
+Modes:
+Basic (UG): Simplified controls, focus on visualization.
+Advanced (MSc): Access to raw parameters (e.g., Hamiltonian terms) and derivations.
+Educational Tools:
+“Explain” button: Pop-up with concept summary (e.g., “What is a phonon?”).
+Quiz Mode: “Calculate bandgap for Si at 300 K” with simulation data.
+Derivation Viewer: Step-by-step math (e.g., Bloch theorem).
+Export:
+Save 3D animations as GIFs or band plots as PNGs.
+Technical Implementation
+
+Graphics:
+Use Three.js (web) or OpenGL (desktop) for 3D rendering.
+Optimize for smooth animation (e.g., 60 FPS on mid-range PCs).
+Calculations:
+Python (NumPy/SciPy) for phonon/band structure solvers.
+Precompute heavy simulations (e.g., 3D DOS) for real-time display.
+Validation:
+Cross-check with textbook values (e.g., Si bandgap ≈ 1.12 eV).
+Sample User Interaction
+
+User selects “Band Structure” → chooses Silicon.
+Adjusts lattice constant → 3D band plot updates, showing indirect bandgap.
+Clicks “Animate Wavefunction” → sees electron probability density in 3D.
+Takes quiz: “Why is Si an indirect bandgap material?” → Refers to simulation.

@@ -1,0 +1,69 @@
+<div class="structure-card" style="background: linear-gradient(135deg, #ddd6fe 0%, #8b5cf6 100%); border-color: #8b5cf6;">
+    <h4 style="color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="interactive-icon">🧮</span> Mathematical Framework
+    </h4>
+    <ul style="color: rgba(255,255,255,0.9); line-height: 1.8; font-size: 1rem;">
+        <li><strong>Schrödinger Equation:</strong> Electronic wavefunctions</li>
+        <li><strong>Bloch Theorem:</strong> Periodic boundary conditions</li>
+        <li><strong>Tight-Binding Model:</strong> Electronic band calculations</li>
+        <li><strong>Born-von Karman:</strong> Lattice dynamics theory</li>
+        <li><strong>Density Functional Theory:</strong> First-principles calculations</li>
+        <li><strong>Green's Functions:</strong> Many-body interactions</li>
+    </ul>
+</div>
+
+<div class="structure-card" style="background: linear-gradient(135deg, #bfdbfe 0%, #3b82f6 100%); border-color: #3b82f6;">
+    <h4 style="color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="interactive-icon">🔬</span> Experimental Techniques
+    </h4>
+    <ul style="color: rgba(255,255,255,0.9); line-height: 1.8; font-size: 1rem;">
+        <li><strong>X-ray Diffraction:</strong> Crystal structure determination</li>
+        <li><strong>ARPES:</strong> Electronic band mapping</li>
+        <li><strong>Neutron Scattering:</strong> Phonon dispersion measurement</li>
+        <li><strong>STM/AFM:</strong> Surface structure imaging</li>
+        <li><strong>TEM:</strong> Crystal defect characterization</li>
+        <li><strong>Raman Spectroscopy:</strong> Vibrational mode analysis</li>
+    </ul>
+</div>
+
+<div class="structure-card" style="background: linear-gradient(135deg, #fed7d7 0%, #e53e3e 100%); border-color: #e53e3e;">
+    <h4 style="color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="interactive-icon">🏭</span> Applications & Technology
+    </h4>
+    <ul style="color: rgba(255,255,255,0.9); line-height: 1.8; font-size: 1rem;">
+        <li><strong>Semiconductors:</strong> Electronic device fabrication</li>
+        <li><strong>Superconductors:</strong> Quantum transport applications</li>
+        <li><strong>Photovoltaics:</strong> Solar cell optimization</li>
+        <li><strong>Thermoelectrics:</strong> Energy conversion materials</li>
+        <li><strong>Quantum Materials:</strong> Topological phases</li>
+        <li><strong>2D Materials:</strong> Graphene and beyond</li>
+    </ul>
+</div>
+
+<div class="structure-card" style="background: linear-gradient(135deg, #dcfce7 0%, #22c55e 100%); border-color: #22c55e;">
+    <h4 style="color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="interactive-icon">🎯</span> Problem-Solving Skills
+    </h4>
+    <ul style="color: rgba(255,255,255,0.9); line-height: 1.8; font-size: 1rem;">
+        <li><strong>Symmetry Analysis:</strong> Group theory applications</li>
+        <li><strong>Phase Diagrams:</strong> Thermodynamic equilibrium</li>
+        <li><strong>Transport Calculations:</strong> Conductivity and mobility</li>
+        <li><strong>Optical Properties:</strong> Dielectric response</li>
+        <li><strong>Magnetic Properties:</strong> Spin interactions</li>
+        <li><strong>Mechanical Properties:</strong> Elastic constants</li>
+    </ul>
+</div>
+
+<div class="structure-card" style="background: linear-gradient(135deg, #f3e8ff 0%, #a855f7 100%); border-color: #a855f7;">
+    <h4 style="color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="interactive-icon">🚀</span> Advanced Topics
+    </h4>
+    <ul style="color: rgba(255,255,255,0.9); line-height: 1.8; font-size: 1rem;">
+        <li><strong>Topological Phases:</strong> Berry curvature and Chern numbers</li>
+        <li><strong>Quantum Phase Transitions:</strong> Critical phenomena</li>
+        <li><strong>Many-Body Effects:</strong> Correlation and interaction</li>
+        <li><strong>Non-Equilibrium:</strong> Ultrafast dynamics</li>
+        <li><strong>Machine Learning:</strong> Materials discovery</li>
+        <li><strong>Quantum Computing:</strong> Solid-state qubits</li>
+    </ul>
+</div>
