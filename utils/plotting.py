@@ -99,7 +99,7 @@ def plot_bloch_magnetization_trajectory(bloch_data, title="3D Magnetization Traj
             cmin=float(np.min(t)),
             cmax=float(np.max(t)),
             colorbar=dict(
-                title=dict(text="Time (ms)", font=dict(color='#94a3b8', size=12)),
+                title=dict(text="Time (ms)", font=dict(size=12)),
                 thickness=12,
                 len=0.6,
                 x=1.05

@@ -163,36 +163,51 @@ def generate_perovskite(a=1.0, n_cells=1):
 
 def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
     """
-    Construct the 3D First Brillouin Zone polyhedron and high-symmetry k-points.
-    - SC (Real) -> SC (Reciprocal): Cube
-    - FCC (Real) -> BCC (Reciprocal): Truncated Octahedron (14 faces: 8 hexagons, 6 squares)
-    - BCC (Real) -> FCC (Reciprocal): Rhombic Dodecahedron (12 rhombic faces)
-    
-    Returns:
-    --------
-    plotly.graph_objects.Figure
+    Construct mathematically exact 3D First Brillouin Zone polyhedron with high-symmetry k-paths.
+    - FCC BZ: Truncated Octahedron (24 vertices, 14 faces: 8 hexagons + 6 squares)
+    - BCC BZ: Rhombic Dodecahedron (14 vertices, 12 rhombic faces)
+    - SC BZ: Cube (8 vertices, 6 square faces)
     """
     from scipy.spatial import ConvexHull
     fig = go.Figure()
     
+    scale = 2.0 * np.pi * k_scale
+    
     if lattice_type == "FCC":
-        scale = 2.0 * np.pi * k_scale
+        s = scale * 0.25
         vertices = []
-        for x in [-1, 1]:
-            for y in [-2, 2]:
-                vertices.extend([[0, x*0.5*scale*0.5, y*0.5*scale*0.5], [x*0.5*scale*0.5, 0, y*0.5*scale*0.5], [x*0.5*scale*0.5, y*0.5*scale*0.5, 0]])
-        vertices = np.unique(np.array(vertices), axis=0)
-        
+        for x, y, z in [
+            (0, 1, 2), (0, 1, -2), (0, -1, 2), (0, -1, -2),
+            (0, 2, 1), (0, 2, -1), (0, -2, 1), (0, -2, -1),
+            (1, 0, 2), (1, 0, -2), (-1, 0, 2), (-1, 0, -2),
+            (2, 0, 1), (2, 0, -1), (-2, 0, 1), (-2, 0, -1),
+            (1, 2, 0), (1, -2, 0), (-1, 2, 0), (-1, -2, 0),
+            (2, 1, 0), (2, -1, 0), (-2, 1, 0), (-2, -1, 0)
+        ]:
+            vertices.append([x * s * 0.5, y * s * 0.5, z * s * 0.5])
+        vertices = np.array(vertices)
         hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
             x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
             i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
-            opacity=0.4,
+            opacity=0.45,
             color='#3b82f6',
-            name='1st Brillouin Zone (Truncated Octahedron)',
+            name='1st BZ (Truncated Octahedron)',
             hoverinfo='skip'
         ))
+        
+        # Add wireframe edges for crystal-clear geometry
+        for simplex in hull.simplices:
+            pts = vertices[simplex]
+            pts = np.vstack([pts, pts[0]])
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines',
+                line=dict(color='rgba(59, 130, 246, 0.8)', width=3),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
         
         hs_points = {
             "Γ (0,0,0)": [0, 0, 0],
@@ -206,7 +221,7 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
@@ -223,35 +238,47 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=6),
+            line=dict(color='#10b981', width=7),
             name='High-Symmetry Path (Γ-X-W-K-Γ-L)'
         ))
         
-        title_str = "<b>FCC 1st Brillouin Zone (Reciprocal BCC - Truncated Octahedron)</b>"
+        title_str = "<b>FCC 1st Brillouin Zone (Truncated Octahedron)</b>"
         
     elif lattice_type == "BCC":
-        scale = 2.0 * np.pi * k_scale
-        v1 = []
+        s = scale * 0.5
+        v1 = [
+            [s, 0, 0], [-s, 0, 0],
+            [0, s, 0], [0, -s, 0],
+            [0, 0, s], [0, 0, -s]
+        ]
+        v2 = []
         for x in [-0.5, 0.5]:
             for y in [-0.5, 0.5]:
                 for z in [-0.5, 0.5]:
-                    v1.append([x * scale * 0.5, y * scale * 0.5, z * scale * 0.5])
-        v2 = [
-            [scale * 0.5, 0, 0], [-scale * 0.5, 0, 0],
-            [0, scale * 0.5, 0], [0, -scale * 0.5, 0],
-            [0, 0, scale * 0.5], [0, 0, -scale * 0.5]
-        ]
-        vertices = np.vstack([v1, v2])
+                    v2.append([x * s, y * s, z * s])
+        vertices = np.array(v1 + v2)
         hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
             x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
             i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
-            opacity=0.4,
+            opacity=0.45,
             color='#8b5cf6',
-            name='1st Brillouin Zone (Rhombic Dodecahedron)',
+            name='1st BZ (Rhombic Dodecahedron)',
             hoverinfo='skip'
         ))
+        
+        # Add wireframe edges
+        for simplex in hull.simplices:
+            pts = vertices[simplex]
+            pts = np.vstack([pts, pts[0]])
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines',
+                line=dict(color='rgba(139, 92, 246, 0.8)', width=3),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
         
         hs_points = {
             "Γ (0,0,0)": [0, 0, 0],
@@ -263,7 +290,7 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
@@ -279,41 +306,53 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=6),
+            line=dict(color='#10b981', width=7),
             name='High-Symmetry Path (Γ-H-P-Γ-N)'
         ))
-        title_str = "<b>BCC 1st Brillouin Zone (Reciprocal FCC - Rhombic Dodecahedron)</b>"
+        title_str = "<b>BCC 1st Brillouin Zone (Rhombic Dodecahedron)</b>"
         
     else:  # Simple Cubic
-        scale = np.pi * k_scale * 0.5
+        s = scale * 0.5
         v = []
-        for x in [-scale, scale]:
-            for y in [-scale, scale]:
-                for z in [-scale, scale]:
-                    v.append([x, y, z])
+        for x in [-0.5, 0.5]:
+            for y in [-0.5, 0.5]:
+                for z in [-0.5, 0.5]:
+                    v.append([x * s, y * s, z * s])
         vertices = np.array(v)
         hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
             x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
             i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
-            opacity=0.4,
+            opacity=0.45,
             color='#06b6d4',
-            name='1st Brillouin Zone (Cube)',
+            name='1st BZ (Cube)',
             hoverinfo='skip'
         ))
         
+        # Add wireframe edges
+        for simplex in hull.simplices:
+            pts = vertices[simplex]
+            pts = np.vstack([pts, pts[0]])
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines',
+                line=dict(color='rgba(6, 182, 212, 0.8)', width=3),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
         hs_points = {
             "Γ (0,0,0)": [0, 0, 0],
-            "X (π/a, 0, 0)": [scale, 0, 0],
-            "M (π/a, π/a, 0)": [scale, scale, 0],
-            "R (π/a, π/a, π/a)": [scale, scale, scale]
+            "X (π/a, 0, 0)": [scale * 0.5, 0, 0],
+            "M (π/a, π/a, 0)": [scale * 0.5, scale * 0.5, 0],
+            "R (π/a, π/a, π/a)": [scale * 0.5, scale * 0.5, scale * 0.5]
         }
         for name, pt in hs_points.items():
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
@@ -321,15 +360,15 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             
         path = np.array([
             [0, 0, 0],
-            [scale, 0, 0],
-            [scale, scale, 0],
+            [scale * 0.5, 0, 0],
+            [scale * 0.5, scale * 0.5, 0],
             [0, 0, 0],
-            [scale, scale, scale]
+            [scale * 0.5, scale * 0.5, scale * 0.5]
         ])
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=6),
+            line=dict(color='#10b981', width=7),
             name='High-Symmetry Path (Γ-X-M-Γ-R)'
         ))
         title_str = "<b>Simple Cubic 1st Brillouin Zone (Cube)</b>"

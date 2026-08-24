@@ -55,7 +55,7 @@ from utils.plotting import (
     apply_glassmorphic_layout,
     plot_bloch_magnetization_trajectory
 )
-from utils.theme import render_theme_sidebar
+from utils.theme import render_theme_sidebar, apply_figure_theme
 
 st.set_page_config(
     page_title="Solid State Physics - Graduate & M.Sc Suite",
@@ -166,10 +166,7 @@ with tabs[0]:
         if view_mode == "3D First Brillouin Zone (Reciprocal)":
             bz_type = "FCC" if "FCC" in crystal_choice or "Diamond" in crystal_choice or "Zincblende" in crystal_choice or "NaCl" in crystal_choice else "BCC" if "BCC" in crystal_choice or "CsCl" in crystal_choice else "SC"
             fig_bz = create_3d_brillouin_zone(bz_type, k_scale=1.0)
-            fig_bz.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor=plot_bg
-            )
+            fig_bz = apply_figure_theme(fig_bz, theme)
             st.plotly_chart(fig_bz, use_container_width=True)
         else:
             fig_crys = go.Figure()
@@ -236,7 +233,7 @@ with tabs[0]:
             fig_crys.add_trace(go.Scatter3d(
                 x=bx, y=by, z=bz,
                 mode='lines',
-                line=dict(color='rgba(148,163,184,0.4)', width=2, dash='dot'),
+                line=dict(color='rgba(148,163,184,0.5)', width=2, dash='dot'),
                 name='Cell Boundary',
                 showlegend=False,
                 hoverinfo='skip'
@@ -288,10 +285,9 @@ with tabs[0]:
                 title=f"<b>3D Crystal Structure: {crystal_choice.split('(')[0]}</b>",
                 scene=dict(xaxis_title='X (Å)', yaxis_title='Y (Å)', zaxis_title='Z (Å)', aspectmode='cube'),
                 height=560,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor=plot_bg,
                 margin=dict(l=0, r=0, t=50, b=0)
             )
+            fig_crys = apply_figure_theme(fig_crys, theme)
             st.plotly_chart(fig_crys, use_container_width=True)
 
         # Quantitative Metrics Dashboard
@@ -341,7 +337,7 @@ with tabs[1]:
     with xrd_col2:
         if xrd_mode == "3D Ewald Sphere Geometry":
             fig_ewald = create_3d_ewald_sphere(xrd_lambda, xrd_a, n_nodes=3)
-            fig_ewald.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
+            fig_ewald = apply_figure_theme(fig_ewald, theme)
             st.plotly_chart(fig_ewald, use_container_width=True)
         else:
             planes_list = [
@@ -400,10 +396,9 @@ with tabs[1]:
                 title=f"<b>Powder X-Ray Diffractogram ({xrd_lattice}, λ = {xrd_lambda:.4f} Å)</b>",
                 xaxis_title="Diffraction Angle 2θ (degrees)",
                 yaxis=dict(title="Relative Intensity (%)", range=[0, 120]),
-                height=480,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=480
             )
+            fig_xrd = apply_figure_theme(fig_xrd, theme)
             st.plotly_chart(fig_xrd, use_container_width=True)
 
             # Indexed Bragg Reflection Peaks Table
@@ -481,10 +476,9 @@ with tabs[2]:
                 title=f"<b>Phonon Dispersion Relation (M₁={mass1} amu, M₂={mass2} amu, C={spring_C} N/m)</b>",
                 xaxis_title="Wavevector k (π/a)",
                 yaxis_title="Phonon Frequency ω (THz)",
-                height=460,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=460
             )
+            fig_ph = apply_figure_theme(fig_ph, theme)
             st.plotly_chart(fig_ph, use_container_width=True)
 
         elif "Density of States" in ph_plot_mode:
@@ -495,7 +489,8 @@ with tabs[2]:
             fig_dos.update_xaxes(title_text="Frequency ω (THz)", row=1, col=1)
             fig_dos.update_xaxes(title_text="Frequency ω (THz)", row=1, col=2)
             fig_dos.update_yaxes(title_text="Density of States g(ω)", row=1, col=1)
-            fig_dos.update_layout(height=460, title="<b>Phonon Density of States g(ω): Van Hove Singularities & Dimensionality</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_dos.update_layout(height=460, title="<b>Phonon Density of States g(ω): Van Hove Singularities & Dimensionality</b>")
+            fig_dos = apply_figure_theme(fig_dos, theme)
             st.plotly_chart(fig_dos, use_container_width=True)
 
         elif "Heat Capacity" in ph_plot_mode:
@@ -512,10 +507,9 @@ with tabs[2]:
                 title=f"<b>Lattice Heat Capacity C_V(T) (Debye Temp Θ_D = {debye_T:.0f} K)</b>",
                 xaxis_title="Temperature T (K)",
                 yaxis_title="Specific Heat C_V (J / mol·K)",
-                height=460,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=460
             )
+            fig_cv = apply_figure_theme(fig_cv, theme)
             st.plotly_chart(fig_cv, use_container_width=True)
 
         else:
@@ -532,10 +526,9 @@ with tabs[2]:
                 title="<b>Low-Temperature Specific Heat Separation: C/T vs T²</b>",
                 xaxis_title="T² (K²)",
                 yaxis_title="C / T (mJ / mol·K²)",
-                height=460,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=460
             )
+            fig_sep = apply_figure_theme(fig_sep, theme)
             st.plotly_chart(fig_sep, use_container_width=True)
 
 
@@ -583,7 +576,8 @@ with tabs[3]:
             fig_kp.update_yaxes(title_text="f(αa)", range=[-3, 3], row=1, col=1)
             fig_kp.update_xaxes(title_text="Crystal Momentum ka / π", range=[0, 1], row=1, col=2)
             fig_kp.update_yaxes(title_text="Energy E / E₀", row=1, col=2)
-            fig_kp.update_layout(height=450, title=f"<b>Kronig-Penney Band Structure (Barrier Strength P = {P_strength})</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_kp.update_layout(height=450, title=f"<b>Kronig-Penney Band Structure (Barrier Strength P = {P_strength})</b>")
+            fig_kp = apply_figure_theme(fig_kp, theme)
             st.plotly_chart(fig_kp, use_container_width=True)
 
     with band_tab2:
@@ -600,10 +594,9 @@ with tabs[3]:
             title="<b>Graphene 2D Tight-Binding Band Structure: Relativistic Dirac Cones at K and K' Points</b>",
             scene=dict(xaxis_title='kx (Å⁻¹)', yaxis_title='ky (Å⁻¹)', zaxis_title='Energy E (eV)', camera=dict(eye=dict(x=1.6, y=1.6, z=1.2))),
             height=540,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor=plot_bg,
             margin=dict(l=0, r=0, t=50, b=0)
         )
+        fig_graphene = apply_figure_theme(fig_graphene, theme)
         st.plotly_chart(fig_graphene, use_container_width=True)
 
     with band_tab3:
@@ -633,7 +626,8 @@ with tabs[3]:
                 
             fig_fs.update_xaxes(title_text="kx (π/a)", range=[-1, 1])
             fig_fs.update_yaxes(title_text="ky (π/a)", range=[-1, 1], scaleanchor="x", scaleratio=1)
-            fig_fs.update_layout(height=480, title=f"<b>Fermi Surface Topography in 2D First Brillouin Zone (E_F = {ef_level:.2f} eV)</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_fs.update_layout(height=480, title=f"<b>Fermi Surface Topography in 2D First Brillouin Zone (E_F = {ef_level:.2f} eV)</b>")
+            fig_fs = apply_figure_theme(fig_fs, theme)
             st.plotly_chart(fig_fs, use_container_width=True)
 
     with band_tab4:
@@ -721,7 +715,7 @@ with tabs[4]:
         with b_col2:
             bloch_data = solve_bloch_equations(t_max=60.0, n_steps=600, B1=b1_rf, T1=t1_val, T2=t2_val, pulse_duration=p_dur)
             fig_bloch_3d = plot_bloch_magnetization_trajectory(bloch_data, f"Bloch Magnetization Trajectory ({pulse_type.split(' ')[0]})")
-            fig_bloch_3d.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
+            fig_bloch_3d = apply_figure_theme(fig_bloch_3d, theme)
             st.plotly_chart(fig_bloch_3d, use_container_width=True)
 
     elif "Free Induction Decay" in mr_mode:
@@ -741,7 +735,8 @@ with tabs[4]:
             fig_fid.update_xaxes(title_text="Frequency Offset Δf (kHz)", range=[-5, 5], row=2, col=1)
             fig_fid.update_yaxes(title_text="FID Amplitude", row=1, col=1)
             fig_fid.update_yaxes(title_text="NMR Intensity (%)", row=2, col=1)
-            fig_fid.update_layout(height=480, title="<b>Fourier Transform Nuclear Magnetic Resonance (FT-NMR) Spectroscopy</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_fid.update_layout(height=480, title="<b>Fourier Transform Nuclear Magnetic Resonance (FT-NMR) Spectroscopy</b>")
+            fig_fid = apply_figure_theme(fig_fid, theme)
             st.plotly_chart(fig_fid, use_container_width=True)
 
     elif "Hahn Spin Echo" in mr_mode:
@@ -763,10 +758,9 @@ with tabs[4]:
                 title=f"<b>Hahn Spin Echo Formation (Refocusing at t = 2τ = {2.0*tau_delay:.1f} ms)</b>",
                 xaxis_title="Time t (ms)",
                 yaxis_title="Transverse Signal Amplitude",
-                height=460,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=460
             )
+            fig_echo = apply_figure_theme(fig_echo, theme)
             st.plotly_chart(fig_echo, use_container_width=True)
 
     elif "EPR / ESR" in mr_mode:
@@ -784,7 +778,8 @@ with tabs[4]:
             fig_epr.add_trace(go.Scatter(x=epr_spec["magnetic_field"], y=epr_spec["derivative"], mode='lines', name='1st Derivative', line=dict(color='#ef4444', width=2.5)), row=2, col=1)
             
             fig_epr.update_xaxes(title_text="Magnetic Field B (Gauss)", row=2, col=1)
-            fig_epr.update_layout(height=480, title=f"<b>EPR Hyperfine Multiplet: {epr_spec['n_lines']} Peak Splitting (2nI+1)</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_epr.update_layout(height=480, title=f"<b>EPR Hyperfine Multiplet: {epr_spec['n_lines']} Peak Splitting (2nI+1)</b>")
+            fig_epr = apply_figure_theme(fig_epr, theme)
             st.plotly_chart(fig_epr, use_container_width=True)
 
     else:
@@ -807,10 +802,9 @@ with tabs[4]:
                 title="<b>Ferromagnetic Resonance (FMR) Kittel Frequency vs Applied Field B₀</b>",
                 xaxis_title="Applied Magnetic Field B₀ (Tesla)",
                 yaxis_title="Resonance Frequency f (GHz)",
-                height=460,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=460
             )
+            fig_fmr = apply_figure_theme(fig_fmr, theme)
             st.plotly_chart(fig_fmr, use_container_width=True)
 
 
@@ -860,7 +854,8 @@ with tabs[5]:
         fig_broad.add_vrect(x0=1e11, x1=1e13, fillcolor="rgba(245,158,11,0.08)", line_width=0, annotation_text="Ionic", row=1, col=1)
         fig_broad.add_vrect(x0=1e14, x1=1e16, fillcolor="rgba(239,68,68,0.08)", line_width=0, annotation_text="Electronic", row=1, col=1)
         
-        fig_broad.update_layout(height=520, title="<b>Complete Dielectric Response Spectrum from DC to Optical UV</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+        fig_broad.update_layout(height=520, title="<b>Complete Dielectric Response Spectrum from DC to Optical UV</b>")
+        fig_broad = apply_figure_theme(fig_broad, theme)
         st.plotly_chart(fig_broad, use_container_width=True)
 
     elif "Debye Dielectric Relaxation" in diel_view:
@@ -881,7 +876,8 @@ with tabs[5]:
             fig_deb.update_xaxes(type="log", title_text="Frequency (Hz)", row=1, col=1)
             fig_deb.update_xaxes(title_text="ε' (Real)", row=1, col=2)
             fig_deb.update_yaxes(title_text="ε'' (Imaginary)", row=1, col=2)
-            fig_deb.update_layout(height=460, title="<b>Debye Relaxation Equations & Semicircular Cole-Cole Arc</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_deb.update_layout(height=460, title="<b>Debye Relaxation Equations & Semicircular Cole-Cole Arc</b>")
+            fig_deb = apply_figure_theme(fig_deb, theme)
             st.plotly_chart(fig_deb, use_container_width=True)
 
     elif "Ferroelectric P-E" in diel_view:
@@ -905,7 +901,8 @@ with tabs[5]:
             fig_fe.update_yaxes(title_text="Polarization P (µC/cm²)", row=1, col=1)
             fig_fe.update_xaxes(title_text="Polarization P (µC/cm²)", row=1, col=2)
             fig_fe.update_yaxes(title_text="Landau Energy F(P)", row=1, col=2)
-            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Free Energy</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Free Energy</b>")
+            fig_fe = apply_figure_theme(fig_fe, theme)
             st.plotly_chart(fig_fe, use_container_width=True)
 
     else:
@@ -932,10 +929,9 @@ with tabs[5]:
             
             fig_pol.update_layout(
                 title=f"<b>Phonon-Polaritons & Reststrahlen Band (LST: ω_LO/ω_TO = {np.sqrt(eps_st/eps_opt):.2f})</b>",
-                height=480,
-                plot_bgcolor=plot_bg,
-                paper_bgcolor='rgba(0,0,0,0)'
+                height=480
             )
+            fig_pol = apply_figure_theme(fig_pol, theme)
             st.plotly_chart(fig_pol, use_container_width=True)
 
 
@@ -961,7 +957,7 @@ with tabs[6]:
             
         with def_col2:
             fig_def = create_crystal_defects_visualization("Simple Cubic", a=1.0, defect_type=defect_sel)
-            fig_def.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
+            fig_def = apply_figure_theme(fig_def, theme)
             st.plotly_chart(fig_def, use_container_width=True)
     else:
         st_col1, st_col2 = st.columns([1, 2.3])
@@ -983,5 +979,6 @@ with tabs[6]:
             fig_stress.update_yaxes(title_text="Y (Å)", row=1, col=1)
             fig_stress.update_yaxes(title_text="Y (Å)", row=2, col=1)
             
-            fig_stress.update_layout(height=560, title="<b>2D Stress Field Tensor Contours Around an Edge Dislocation Core</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            fig_stress.update_layout(height=560, title="<b>2D Stress Field Tensor Contours Around an Edge Dislocation Core</b>")
+            fig_stress = apply_figure_theme(fig_stress, theme)
             st.plotly_chart(fig_stress, use_container_width=True)

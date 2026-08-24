@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objects as go
 
 def init_theme():
     """Initialize theme session state if not already set."""
@@ -35,16 +36,16 @@ def get_theme():
             "dark": True,
             "app_bg": "linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%)",
             "sidebar_bg": "#111827",
-            "card_bg": "rgba(17, 24, 39, 0.85)",
+            "card_bg": "rgba(17, 24, 39, 0.88)",
             "card_border": "rgba(255, 255, 255, 0.12)",
             "text_primary": "#f8fafc",
             "text_secondary": "#94a3b8",
             "theory_bg": "rgba(99, 102, 241, 0.14)",
             "theory_border": "#818cf8",
-            "metric_bg": "rgba(30, 41, 59, 0.8)",
-            "plot_bg": "rgba(15, 23, 42, 0.75)",
+            "metric_bg": "rgba(30, 41, 59, 0.85)",
+            "plot_bg": "rgba(15, 23, 42, 0.85)",
             "paper_bg": "rgba(0, 0, 0, 0)",
-            "grid_color": "rgba(255, 255, 255, 0.1)",
+            "grid_color": "rgba(255, 255, 255, 0.12)",
             "accent": "#38bdf8",
             "accent_grad": "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%)"
         }
@@ -52,14 +53,14 @@ def get_theme():
         theme = {
             "dark": False,
             "app_bg": "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
-            "sidebar_bg": "#f8fafc",
-            "card_bg": "rgba(255, 255, 255, 0.95)",
-            "card_border": "rgba(203, 213, 225, 0.85)",
+            "sidebar_bg": "#ffffff",
+            "card_bg": "rgba(255, 255, 255, 0.98)",
+            "card_border": "rgba(203, 213, 225, 0.9)",
             "text_primary": "#0f172a",
             "text_secondary": "#475569",
             "theory_bg": "rgba(238, 242, 255, 0.98)",
             "theory_border": "#4f46e5",
-            "metric_bg": "rgba(255, 255, 255, 0.95)",
+            "metric_bg": "rgba(255, 255, 255, 0.98)",
             "plot_bg": "rgba(255, 255, 255, 0.98)",
             "paper_bg": "rgba(0, 0, 0, 0)",
             "grid_color": "rgba(0, 0, 0, 0.08)",
@@ -69,6 +70,42 @@ def get_theme():
         
     inject_theme_css(theme)
     return theme
+
+
+def apply_figure_theme(fig, theme=None):
+    """Apply unified font colors, plot background, gridlines, and 3D scene parameters to any Plotly figure."""
+    if theme is None:
+        theme = get_theme()
+        
+    text_c = theme["text_primary"]
+    grid_c = theme["grid_color"]
+    plot_b = theme["plot_bg"]
+    
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor=plot_b,
+        font=dict(family='Plus Jakarta Sans, sans-serif', color=text_c),
+        title=dict(font=dict(color=text_c, family='Plus Jakarta Sans, sans-serif')),
+        legend=dict(
+            font=dict(color=text_c),
+            bgcolor='rgba(15,23,42,0.6)' if theme['dark'] else 'rgba(255,255,255,0.85)',
+            bordercolor=theme['card_border'],
+            borderwidth=1
+        )
+    )
+    
+    # 2D Axes
+    fig.update_xaxes(color=text_c, gridcolor=grid_c, zerolinecolor=grid_c, tickfont=dict(color=text_c))
+    fig.update_yaxes(color=text_c, gridcolor=grid_c, zerolinecolor=grid_c, tickfont=dict(color=text_c))
+    
+    # 3D Scene Axes
+    fig.update_scenes(
+        xaxis=dict(color=text_c, gridcolor=grid_c, backgroundcolor='rgba(0,0,0,0)', tickfont=dict(color=text_c), title=dict(font=dict(color=text_c))),
+        yaxis=dict(color=text_c, gridcolor=grid_c, backgroundcolor='rgba(0,0,0,0)', tickfont=dict(color=text_c), title=dict(font=dict(color=text_c))),
+        zaxis=dict(color=text_c, gridcolor=grid_c, backgroundcolor='rgba(0,0,0,0)', tickfont=dict(color=text_c), title=dict(font=dict(color=text_c)))
+    )
+    
+    return fig
 
 
 def inject_theme_css(theme):
@@ -91,39 +128,39 @@ def inject_theme_css(theme):
             border-right: 1px solid {theme['card_border']} !important;
         }}
         
-        /* Typography overrides */
-        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown {{
+        /* KaTeX & Math Formulas */
+        .katex, .katex-display, .katex * {{
             color: {theme['text_primary']} !important;
         }}
         
-        /* Custom Components */
+        /* Crystal Header Banner */
         .crystal-header {{
-            background: {theme['accent_grad']};
-            padding: 2.5rem 2rem;
-            border-radius: 24px;
-            text-align: center;
-            margin-bottom: 1.8rem;
-            color: white !important;
-            box-shadow: 0 15px 35px rgba(30, 58, 138, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: {theme['accent_grad']} !important;
+            padding: 2.4rem 2rem !important;
+            border-radius: 24px !important;
+            text-align: center !important;
+            margin-bottom: 1.8rem !important;
+            box-shadow: 0 15px 35px rgba(30, 58, 138, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
         }}
-        .crystal-header * {{
-            color: white !important;
+        .crystal-header h1, .crystal-header p, .crystal-header div, .crystal-header span {{
+            color: #ffffff !important;
         }}
         
+        /* Metric Dashboard Cards */
         .metric-card {{
             background: {theme['metric_bg']} !important;
-            backdrop-filter: blur(14px);
-            border-radius: 16px;
-            padding: 1.1rem;
-            text-align: center;
+            backdrop-filter: blur(14px) !important;
+            border-radius: 16px !important;
+            padding: 1.2rem 1rem !important;
+            text-align: center !important;
             border: 1px solid {theme['card_border']} !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, {'0.15' if dark else '0.06'});
-            transition: transform 0.25s ease;
-            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, {'0.18' if dark else '0.05'}) !important;
+            transition: transform 0.25s ease !important;
+            margin-bottom: 0.8rem !important;
         }}
         .metric-card:hover {{
-            transform: translateY(-3px);
+            transform: translateY(-3px) !important;
             border-color: #6366f1 !important;
         }}
         
@@ -138,54 +175,56 @@ def inject_theme_css(theme):
             font-size: 0.82rem !important;
             color: {theme['text_secondary']} !important;
             font-weight: 600 !important;
-            margin-top: 4px;
+            margin-top: 4px !important;
         }}
         
+        /* Theoretical Derivation Callout Box */
         .theory-box {{
             background: {theme['theory_bg']} !important;
             border-left: 4px solid {theme['theory_border']} !important;
-            padding: 1.1rem 1.4rem;
-            border-radius: 12px;
-            margin: 1rem 0;
+            padding: 1.1rem 1.4rem !important;
+            border-radius: 12px !important;
+            margin: 1rem 0 !important;
             color: {theme['text_primary']} !important;
-            font-size: 0.95rem;
-            line-height: 1.6;
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
             border-top: 1px solid {theme['card_border']} !important;
             border-right: 1px solid {theme['card_border']} !important;
             border-bottom: 1px solid {theme['card_border']} !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, {'0.15' if dark else '0.04'});
+            box-shadow: 0 4px 12px rgba(0, 0, 0, {'0.15' if dark else '0.04'}) !important;
         }}
         .theory-box h4 {{
             color: {'#a5b4fc' if dark else '#4338ca'} !important;
-            font-weight: 700;
-            margin-bottom: 0.4rem;
+            font-weight: 700 !important;
+            font-size: 1.05rem !important;
+            margin-bottom: 0.4rem !important;
         }}
 
-        /* Streamlit Tabs */
+        /* Streamlit Tabs Navigation */
         [data-baseweb="tab-list"] {{
             background: {theme['card_bg']} !important;
-            padding: 6px;
-            border-radius: 14px;
+            padding: 6px !important;
+            border-radius: 14px !important;
             border: 1px solid {theme['card_border']} !important;
         }}
         [data-baseweb="tab"] {{
             color: {theme['text_secondary']} !important;
             font-weight: 600 !important;
-            border-radius: 10px;
+            border-radius: 10px !important;
         }}
         [aria-selected="true"] {{
             background: {'rgba(99, 102, 241, 0.25)' if dark else 'rgba(79, 70, 229, 0.12)'} !important;
             color: {'#38bdf8' if dark else '#1d4ed8'} !important;
         }}
 
-        /* Expander and Table styles */
+        /* Dataframe / Expander */
         .streamlit-expanderHeader {{
             background: {theme['card_bg']} !important;
             color: {theme['text_primary']} !important;
-            border-radius: 10px;
+            border-radius: 10px !important;
         }}
 
-        /* Mobile Responsive */
+        /* Mobile Viewport Breakpoints */
         @media (max-width: 768px) {{
             .crystal-header {{
                 padding: 1.6rem 1rem !important;

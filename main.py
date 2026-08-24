@@ -7,7 +7,7 @@ import math
 from utils.plotting import configure_plotting_style, apply_glassmorphic_layout
 from utils.crystal_structures import create_3d_brillouin_zone, generate_fcc
 from utils.physics import solve_bloch_equations
-from utils.theme import render_theme_sidebar
+from utils.theme import render_theme_sidebar, apply_figure_theme
 
 # Set page configuration with improved aesthetics
 st.set_page_config(
@@ -132,16 +132,16 @@ def main():
                 xaxis_title="Spatial Coordinate x",
                 yaxis_title="Wave Amplitude Ψ",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
-                paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=40, r=20, t=50, b=40)
             )
+            fig_wave = apply_figure_theme(fig_wave, theme)
             st.plotly_chart(fig_wave, use_container_width=True)
 
         elif "Brillouin" in sandbox_mode:
             # 3D Brillouin Zone interactive plot
             bz_fig = create_3d_brillouin_zone("FCC", k_scale=1.0)
             bz_fig.update_layout(height=460, margin=dict(l=0, r=0, t=40, b=0))
+            bz_fig = apply_figure_theme(bz_fig, theme)
             st.plotly_chart(bz_fig, use_container_width=True)
 
         elif "Bloch Equation" in sandbox_mode:
@@ -160,10 +160,9 @@ def main():
                 xaxis_title="Time t (ms)",
                 yaxis_title="Magnetization M/M₀",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
-                paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=40, r=20, t=50, b=40)
             )
+            fig_bloch = apply_figure_theme(fig_bloch, theme)
             st.plotly_chart(fig_bloch, use_container_width=True)
 
         else:  # Dielectric
@@ -180,10 +179,9 @@ def main():
             fig_diel.update_layout(
                 title="<b>Broadband Dielectric Spectroscopy & Relaxation Mechanisms</b>",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
-                paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=40, r=20, t=50, b=40)
             )
+            fig_diel = apply_figure_theme(fig_diel, theme)
             st.plotly_chart(fig_diel, use_container_width=True)
 
     with col_info:
