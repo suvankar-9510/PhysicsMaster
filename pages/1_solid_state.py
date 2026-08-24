@@ -313,21 +313,45 @@ with tabs[0]:
             # Miller Plane rendering
             if show_miller_plane and (mh != 0 or mk != 0 or ml != 0):
                 box_sz = n_repeat * lattice_a
-                u_p = np.linspace(0, box_sz, 15)
-                v_p = np.linspace(0, box_sz, 15)
-                xx, yy = np.meshgrid(u_p, v_p)
                 if ml != 0:
+                    u_p = np.linspace(0, box_sz, 25)
+                    v_p = np.linspace(0, box_sz, 25)
+                    xx, yy = np.meshgrid(u_p, v_p)
                     zz = (lattice_a - mh * xx - mk * yy) / ml
                     zz = np.where((zz >= 0) & (zz <= box_sz), zz, np.nan)
-                else:
-                    zz = np.full_like(xx, lattice_a / 2.0)
-                fig_crys.add_trace(go.Surface(
-                    x=xx, y=yy, z=zz,
-                    opacity=0.35,
-                    colorscale=[[0, 'rgba(239,68,68,0.4)'], [1, 'rgba(249,115,22,0.4)']],
-                    showscale=False,
-                    name=f'({mh}{mk}{ml}) Plane'
-                ))
+                    fig_crys.add_trace(go.Surface(
+                        x=xx, y=yy, z=zz,
+                        opacity=0.45,
+                        colorscale=[[0, 'rgba(239,68,68,0.6)'], [1, 'rgba(249,115,22,0.6)']],
+                        showscale=False,
+                        name=f'({mh}{mk}{ml}) Plane'
+                    ))
+                elif mk != 0:
+                    u_p = np.linspace(0, box_sz, 25)
+                    w_p = np.linspace(0, box_sz, 25)
+                    xx, zz = np.meshgrid(u_p, w_p)
+                    yy = (lattice_a - mh * xx) / mk
+                    yy = np.where((yy >= 0) & (yy <= box_sz), yy, np.nan)
+                    fig_crys.add_trace(go.Surface(
+                        x=xx, y=yy, z=zz,
+                        opacity=0.45,
+                        colorscale=[[0, 'rgba(239,68,68,0.6)'], [1, 'rgba(249,115,22,0.6)']],
+                        showscale=False,
+                        name=f'({mh}{mk}{ml}) Plane'
+                    ))
+                else:  # mh != 0
+                    v_p = np.linspace(0, box_sz, 25)
+                    w_p = np.linspace(0, box_sz, 25)
+                    yy, zz = np.meshgrid(v_p, w_p)
+                    xx = np.full_like(yy, lattice_a / mh)
+                    xx = np.where((xx >= 0) & (xx <= box_sz), xx, np.nan)
+                    fig_crys.add_trace(go.Surface(
+                        x=xx, y=yy, z=zz,
+                        opacity=0.45,
+                        colorscale=[[0, 'rgba(239,68,68,0.6)'], [1, 'rgba(249,115,22,0.6)']],
+                        showscale=False,
+                        name=f'({mh}{mk}{ml}) Plane'
+                    ))
 
             fig_crys.update_layout(
                 title=f"<b>3D Crystal Structure: {crystal_choice.split('(')[0]}</b>",
@@ -415,7 +439,8 @@ with tabs[1]:
             for tth, intens, label, d_val in xrd_peaks:
                 diffractogram += intens * np.exp(-4.0 * np.log(2.0) * ((two_theta_axis - tth) / fwhm)**2)
                 
-            diffractogram = (diffractogram / (np.max(diffractogram) + 1e-12)) * 100.0
+            max_int = np.max(diffractogram) + 1e-12
+            diffractogram = (diffractogram / max_int) * 100.0
             
             fig_xrd = go.Figure()
             fig_xrd.add_trace(go.Scatter(
@@ -427,20 +452,23 @@ with tabs[1]:
             
             for tth, intens, label, d_val in xrd_peaks:
                 if tth <= 100:
+                    peak_h = (intens / np.max([p[1] for p in xrd_peaks])) * 100.0
                     fig_xrd.add_annotation(
-                        x=tth, y=102,
-                        text=label,
+                        x=tth, y=peak_h,
+                        text=f"{label}<br>{d_val:.2f}Å",
                         showarrow=True,
-                        arrowhead=1,
-                        arrowsize=0.8,
+                        arrowhead=2,
+                        arrowsize=1,
+                        arrowwidth=1.5,
                         arrowcolor='#ef4444',
+                        ay=-35,
                         font=dict(size=10, color=text_primary)
                     )
                     
             fig_xrd.update_layout(
                 title=f"<b>Powder X-Ray Diffractogram ({xrd_lattice}, λ = {xrd_lambda:.4f} Å)</b>",
                 xaxis_title="Diffraction Angle 2θ (degrees)",
-                yaxis_title="Relative Intensity (%)",
+                yaxis=dict(title="Relative Intensity (%)", range=[0, 120]),
                 height=480,
                 plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
@@ -798,7 +826,7 @@ with tabs[5]:
             eps_inf = st.slider("Optical Permittivity ε_∞ (High f)", 1.0, 10.0, 3.0, 0.5)
             tau_rel = st.slider("Relaxation Time τ (log₁₀ s)", -12.0, -6.0, -9.0, 0.5)
         with deb_col2:
-            f_range = np.logspace(tau_rel - 4, tau_rel + 4, 300)
+            f_range = np.logspace(-tau_rel - 4, -tau_rel + 4, 300)
             deb_res = calculate_debye_dielectric_dispersion(f_range, eps_static=eps_s, eps_optical=eps_inf, tau_relaxation=10**tau_rel)
             
             fig_deb = make_subplots(rows=1, cols=2, subplot_titles=["Permittivity vs Frequency", "Cole-Cole Plot (ε'' vs ε')"])

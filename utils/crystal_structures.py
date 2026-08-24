@@ -172,106 +172,98 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
     --------
     plotly.graph_objects.Figure
     """
+    from scipy.spatial import ConvexHull
     fig = go.Figure()
     
     if lattice_type == "FCC":
-        # First Brillouin Zone for FCC is a Truncated Octahedron in reciprocal space
-        # High symmetry points: Gamma=(0,0,0), X=(1,0,0), L=(0.5, 0.5, 0.5), W=(1, 0.5, 0), K=(0.75, 0.75, 0)
         scale = 2.0 * np.pi * k_scale
-        
-        # 24 vertices of truncated octahedron: all permutations of (0, +-1, +-2)*scale/2
         vertices = []
         for x in [-1, 1]:
             for y in [-2, 2]:
-                vertices.extend([[0, x*0.5*scale, y*0.5*scale], [x*0.5*scale, 0, y*0.5*scale], [x*0.5*scale, y*0.5*scale, 0]])
+                vertices.extend([[0, x*0.5*scale*0.5, y*0.5*scale*0.5], [x*0.5*scale*0.5, 0, y*0.5*scale*0.5], [x*0.5*scale*0.5, y*0.5*scale*0.5, 0]])
         vertices = np.unique(np.array(vertices), axis=0)
         
-        # Mesh surface representing the truncated octahedron
-        # Define the 14 faces via Delaunay / Convex hull approximation
-        x_v, y_v, z_v = vertices[:, 0], vertices[:, 1], vertices[:, 2]
+        hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
-            x=x_v, y=y_v, z=z_v,
-            alphahull=0,
-            opacity=0.35,
+            x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+            i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
+            opacity=0.4,
             color='#3b82f6',
             name='1st Brillouin Zone (Truncated Octahedron)',
             hoverinfo='skip'
         ))
         
-        # Add High Symmetry Points
         hs_points = {
-            r"$\Gamma$ (0,0,0)": [0, 0, 0],
-            "X (2π/a, 0, 0)": [scale * 0.5, 0, 0],
-            "L (π/a, π/a, π/a)": [scale * 0.25, scale * 0.25, scale * 0.25],
-            "W (2π/a, π/a, 0)": [scale * 0.5, scale * 0.25, 0],
-            "K (3π/2a, 3π/2a, 0)": [scale * 0.375, scale * 0.375, 0]
+            "Γ (0,0,0)": [0, 0, 0],
+            "X (2π/a, 0, 0)": [scale * 0.25, 0, 0],
+            "L (π/a, π/a, π/a)": [scale * 0.125, scale * 0.125, scale * 0.125],
+            "W (2π/a, π/a, 0)": [scale * 0.25, scale * 0.125, 0],
+            "K (3π/2a, 3π/2a, 0)": [scale * 0.1875, scale * 0.1875, 0]
         }
         
         for name, pt in hs_points.items():
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
             ))
             
-        # Draw high-symmetry path: Gamma -> X -> W -> K -> Gamma -> L
         path = np.array([
             [0, 0, 0],
-            [scale * 0.5, 0, 0],
-            [scale * 0.5, scale * 0.25, 0],
-            [scale * 0.375, scale * 0.375, 0],
+            [scale * 0.25, 0, 0],
+            [scale * 0.25, scale * 0.125, 0],
+            [scale * 0.1875, scale * 0.1875, 0],
             [0, 0, 0],
-            [scale * 0.25, scale * 0.25, scale * 0.25]
+            [scale * 0.125, scale * 0.125, scale * 0.125]
         ])
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=5),
+            line=dict(color='#10b981', width=6),
             name='High-Symmetry Path (Γ-X-W-K-Γ-L)'
         ))
         
         title_str = "<b>FCC 1st Brillouin Zone (Reciprocal BCC - Truncated Octahedron)</b>"
         
     elif lattice_type == "BCC":
-        # First Brillouin Zone for BCC is a Rhombic Dodecahedron (12 faces)
         scale = 2.0 * np.pi * k_scale
-        # 14 vertices: 8 of type (+-0.5, +-0.5, +-0.5), 6 of type (+-1, 0, 0)
         v1 = []
         for x in [-0.5, 0.5]:
             for y in [-0.5, 0.5]:
                 for z in [-0.5, 0.5]:
-                    v1.append([x * scale, y * scale, z * scale])
+                    v1.append([x * scale * 0.5, y * scale * 0.5, z * scale * 0.5])
         v2 = [
-            [scale, 0, 0], [-scale, 0, 0],
-            [0, scale, 0], [0, -scale, 0],
-            [0, 0, scale], [0, 0, -scale]
+            [scale * 0.5, 0, 0], [-scale * 0.5, 0, 0],
+            [0, scale * 0.5, 0], [0, -scale * 0.5, 0],
+            [0, 0, scale * 0.5], [0, 0, -scale * 0.5]
         ]
         vertices = np.vstack([v1, v2])
+        hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
             x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
-            alphahull=0,
-            opacity=0.35,
+            i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
+            opacity=0.4,
             color='#8b5cf6',
             name='1st Brillouin Zone (Rhombic Dodecahedron)',
             hoverinfo='skip'
         ))
         
         hs_points = {
-            r"$\Gamma$ (0,0,0)": [0, 0, 0],
-            "H (0, 2π/a, 0)": [0, scale, 0],
-            "P (π/a, π/a, π/a)": [scale * 0.5, scale * 0.5, scale * 0.5],
-            "N (π/a, π/a, 0)": [scale * 0.5, scale * 0.5, 0]
+            "Γ (0,0,0)": [0, 0, 0],
+            "H (0, 2π/a, 0)": [0, scale * 0.5, 0],
+            "P (π/a, π/a, π/a)": [scale * 0.25, scale * 0.25, scale * 0.25],
+            "N (π/a, π/a, 0)": [scale * 0.25, scale * 0.25, 0]
         }
         for name, pt in hs_points.items():
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
@@ -279,40 +271,40 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             
         path = np.array([
             [0, 0, 0],
-            [0, scale, 0],
-            [scale * 0.5, scale * 0.5, scale * 0.5],
+            [0, scale * 0.5, 0],
+            [scale * 0.25, scale * 0.25, scale * 0.25],
             [0, 0, 0],
-            [scale * 0.5, scale * 0.5, 0]
+            [scale * 0.25, scale * 0.25, 0]
         ])
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=5),
+            line=dict(color='#10b981', width=6),
             name='High-Symmetry Path (Γ-H-P-Γ-N)'
         ))
         title_str = "<b>BCC 1st Brillouin Zone (Reciprocal FCC - Rhombic Dodecahedron)</b>"
         
     else:  # Simple Cubic
-        scale = np.pi * k_scale
-        # Cube from -scale to +scale
+        scale = np.pi * k_scale * 0.5
         v = []
         for x in [-scale, scale]:
             for y in [-scale, scale]:
                 for z in [-scale, scale]:
                     v.append([x, y, z])
         vertices = np.array(v)
+        hull = ConvexHull(vertices)
         
         fig.add_trace(go.Mesh3d(
             x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
-            alphahull=0,
-            opacity=0.35,
+            i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
+            opacity=0.4,
             color='#06b6d4',
             name='1st Brillouin Zone (Cube)',
             hoverinfo='skip'
         ))
         
         hs_points = {
-            r"$\Gamma$ (0,0,0)": [0, 0, 0],
+            "Γ (0,0,0)": [0, 0, 0],
             "X (π/a, 0, 0)": [scale, 0, 0],
             "M (π/a, π/a, 0)": [scale, scale, 0],
             "R (π/a, π/a, π/a)": [scale, scale, scale]
@@ -321,7 +313,7 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             fig.add_trace(go.Scatter3d(
                 x=[pt[0]], y=[pt[1]], z=[pt[2]],
                 mode='markers+text',
-                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                marker=dict(size=7, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
                 text=[name],
                 textposition='top center',
                 name=name
@@ -337,24 +329,21 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
         fig.add_trace(go.Scatter3d(
             x=path[:, 0], y=path[:, 1], z=path[:, 2],
             mode='lines',
-            line=dict(color='#10b981', width=5),
+            line=dict(color='#10b981', width=6),
             name='High-Symmetry Path (Γ-X-M-Γ-R)'
         ))
         title_str = "<b>Simple Cubic 1st Brillouin Zone (Cube)</b>"
         
     fig.update_layout(
-        title=dict(text=title_str, font=dict(size=18, color='#1e293b')),
+        title=dict(text=title_str),
         scene=dict(
-            xaxis_title='kx (Å⁻¹)',
-            yaxis_title='ky (Å⁻¹)',
-            zaxis_title='kz (Å⁻¹)',
-            aspectmode='cube',
-            camera=dict(eye=dict(x=1.6, y=1.6, z=1.6))
+            xaxis=dict(title='kx (Å⁻¹)', backgroundcolor='rgba(0,0,0,0)'),
+            yaxis=dict(title='ky (Å⁻¹)', backgroundcolor='rgba(0,0,0,0)'),
+            zaxis=dict(title='kz (Å⁻¹)', backgroundcolor='rgba(0,0,0,0)'),
+            aspectmode='cube'
         ),
-        width=750,
-        height=650,
-        showlegend=True,
-        margin=dict(l=0, r=0, t=60, b=0)
+        height=540,
+        margin=dict(l=0, r=0, t=50, b=0)
     )
     
     return fig
@@ -369,72 +358,71 @@ def create_3d_ewald_sphere(wavelength=1.54, lattice_constant=3.5, n_nodes=3):
     Construct 3D Ewald Sphere of radius k = 2*pi/lambda intersecting reciprocal lattice.
     Laue condition: k_out - k_in = G.
     """
-    k_radius = 2.0 * np.pi / wavelength  # Radius of Ewald sphere (Å⁻¹)
-    b_step = 2.0 * np.pi / lattice_constant  # Reciprocal lattice vector length
+    k_radius = 2.0 * np.pi / wavelength
+    b_step = 2.0 * np.pi / lattice_constant
     
     fig = go.Figure()
     
-    # Generate 3D Reciprocal Lattice Nodes
     recip_points = []
     for h in range(-n_nodes, n_nodes + 1):
         for k in range(-n_nodes, n_nodes + 1):
             for l in range(-n_nodes, n_nodes + 1):
                 recip_points.append([h * b_step, k * b_step, l * b_step])
+                
     recip_points = np.array(recip_points)
     
-    # Reciprocal nodes trace
     fig.add_trace(go.Scatter3d(
         x=recip_points[:, 0], y=recip_points[:, 1], z=recip_points[:, 2],
         mode='markers',
-        marker=dict(size=5, color='#64748b', opacity=0.7),
-        name='Reciprocal Nodes (G_hkl)'
+        marker=dict(size=4.5, color='#94a3b8', opacity=0.7),
+        name='Reciprocal Lattice G_(hkl)'
     ))
     
-    # Ewald Sphere Center at (-k_radius, 0, 0), Sphere passes through origin (0,0,0)
     u = np.linspace(0, 2 * np.pi, 40)
-    v = np.linspace(0, np.pi, 20)
-    xs = -k_radius + k_radius * np.outer(np.cos(u), np.sin(v))
-    ys = k_radius * np.outer(np.sin(u), np.sin(v))
-    zs = k_radius * np.outer(np.ones(np.size(u)), np.cos(v))
+    v = np.linspace(0, np.pi, 30)
+    center_x, center_y, center_z = -k_radius, 0, 0
+    xs = center_x + k_radius * np.outer(np.cos(u), np.sin(v))
+    ys = center_y + k_radius * np.outer(np.sin(u), np.sin(v))
+    zs = center_z + k_radius * np.outer(np.ones(np.size(u)), np.cos(v))
     
     fig.add_trace(go.Surface(
         x=xs, y=ys, z=zs,
-        opacity=0.25,
-        colorscale=[[0, 'rgba(59,130,246,0.3)'], [1, 'rgba(147,197,253,0.3)']],
+        opacity=0.3,
+        colorscale=[[0, 'rgba(59,130,246,0.5)'], [1, 'rgba(99,102,241,0.5)']],
         showscale=False,
         name='Ewald Sphere (k = 2π/λ)'
     ))
     
-    # Incident beam k_in from center to origin
     fig.add_trace(go.Scatter3d(
         x=[-k_radius, 0], y=[0, 0], z=[0, 0],
         mode='lines+markers',
-        line=dict(color='#ef4444', width=6),
-        marker=dict(size=[6, 10], color=['#ef4444', '#ef4444']),
-        name='Incident Wavevector (k_in)'
+        line=dict(color='#10b981', width=6),
+        marker=dict(size=6, color='#10b981'),
+        name='Incident Wavevector k_in'
     ))
     
-    fig.update_layout(
-        title=dict(
-            text=f"<b>3D Ewald Sphere Diffraction Geometry</b> (λ = {wavelength:.2f} Å, a = {lattice_constant:.2f} Å)",
-            font=dict(size=16, color='#1e293b')
-        ),
-        scene=dict(
-            xaxis_title='kx (Å⁻¹)',
-            yaxis_title='ky (Å⁻¹)',
-            zaxis_title='kz (Å⁻¹)',
-            aspectmode='cube'
-        ),
-        width=750,
-        height=600,
-        margin=dict(l=0, r=0, t=60, b=0)
-    )
+    dist_to_sphere = np.abs(np.sqrt((recip_points[:,0] - center_x)**2 + (recip_points[:,1] - center_y)**2 + (recip_points[:,2] - center_z)**2) - k_radius)
+    diffract_nodes = recip_points[dist_to_sphere < 0.45 * b_step]
     
+    if len(diffract_nodes) > 0:
+        fig.add_trace(go.Scatter3d(
+            x=diffract_nodes[:, 0], y=diffract_nodes[:, 1], z=diffract_nodes[:, 2],
+            mode='markers',
+            marker=dict(size=9, color='#ef4444', symbol='diamond'),
+            name='Diffracting Nodes (Δk = G)'
+        ))
+        
+    fig.update_layout(
+        title="<b>3D Ewald Sphere Diffraction Geometry (Laue Condition: Δk = G)</b>",
+        scene=dict(xaxis_title='kx (Å⁻¹)', yaxis_title='ky (Å⁻¹)', zaxis_title='kz (Å⁻¹)', aspectmode='cube'),
+        height=540,
+        margin=dict(l=0, r=0, t=50, b=0)
+    )
     return fig
 
 
 # ============================================================================
-# 4. 3D CRYSTAL DISLOCATION & DEFECT GENERATOR
+# 4. CRYSTAL DEFECTS & DISLOCATIONS
 # ============================================================================
 
 def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, defect_type="Edge Dislocation"):
@@ -444,7 +432,6 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
     - Interstitial (Frenkel)
     - Substitutional impurity
     - Edge Dislocation (extra half plane of atoms, Burgers vector b)
-    - Screw Dislocation (helical ramp of atoms)
     """
     n_cells = 4
     points = generate_simple_cubic(a, n_cells)
@@ -454,16 +441,14 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
     center = np.mean(points, axis=0)
     
     if defect_type == "Vacancy":
-        # Remove atom closest to center
         dist_sq = np.sum((points - center)**2, axis=1)
-        remove_idx = np.argmin(dist_sq)
+        remove_idx = int(np.argmin(dist_sq))
         points = np.delete(points, remove_idx, axis=0)
-        colors = np.delete(colors, remove_idx)
-        sizes = np.delete(sizes, remove_idx)
+        colors.pop(remove_idx)
+        sizes.pop(remove_idx)
         title_info = "Schottky Vacancy (Missing atomic site)"
         
     elif defect_type == "Interstitial":
-        # Add interstitial atom in octahedral/tetrahedral void
         interstitial_pt = center + np.array([0.5 * a, 0.5 * a, 0.5 * a])
         points = np.vstack([points, interstitial_pt])
         colors.append('#ef4444')
@@ -471,19 +456,15 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
         title_info = "Frenkel Interstitial (Self-interstitial in lattice void)"
         
     elif defect_type == "Substitutional":
-        # Replace center atom with dopant
         dist_sq = np.sum((points - center)**2, axis=1)
-        sub_idx = np.argmin(dist_sq)
+        sub_idx = int(np.argmin(dist_sq))
         colors[sub_idx] = '#10b981'
         sizes[sub_idx] = 22
         title_info = "Substitutional Impurity / Dopant Atom"
         
-    elif defect_type == "Edge Dislocation":
-        # Deform lattice according to Volterra edge dislocation displacement:
-        # u_x = (b/2pi) * [theta + sin(2theta)/(4*(1-nu))]
-        # u_y = -(b/2pi) * [(1-2nu)/(2(1-nu)) * ln(r) + cos(2theta)/(4*(1-nu))]
-        b = a  # Burgers vector magnitude
-        nu = 0.3  # Poisson's ratio
+    else:  # Edge Dislocation
+        b = a
+        nu = 0.3
         deformed_pts = []
         
         for pt in points:
@@ -492,11 +473,9 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
             r = np.sqrt(dx**2 + dy**2) + 1e-4
             theta = np.arctan2(dy, dx)
             
-            # Volterra displacement
             ux = (b / (2.0 * np.pi)) * (theta + np.sin(2.0 * theta) / (4.0 * (1.0 - nu)))
             uy = -(b / (2.0 * np.pi)) * (((1.0 - 2.0 * nu) / (2.0 * (1.0 - nu))) * np.log(r) + np.cos(2.0 * theta) / (4.0 * (1.0 - nu)))
             
-            # Damp far away
             decay = np.exp(-r / (2.5 * a))
             deformed_pts.append([pt[0] + ux * decay, pt[1] + uy * decay, pt[2]])
             
@@ -519,8 +498,7 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
     
     fig.update_layout(
         title=dict(
-            text=f"<b>{defect_type}</b><br><span style='font-size:13px; color:#64748b;'>{title_info}</span>",
-            font=dict(size=16, color='#1e293b')
+            text=f"<b>{defect_type}</b><br><span style='font-size:13px; color:#94a3b8;'>{title_info}</span>"
         ),
         scene=dict(
             xaxis_title='X (Å)',
@@ -528,8 +506,7 @@ def create_crystal_defects_visualization(structure_type="Simple Cubic", a=1.0, d
             zaxis_title='Z (Å)',
             aspectmode='cube'
         ),
-        width=700,
-        height=600,
+        height=540,
         margin=dict(l=0, r=0, t=60, b=0)
     )
     

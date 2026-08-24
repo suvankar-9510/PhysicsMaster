@@ -95,7 +95,15 @@ def plot_bloch_magnetization_trajectory(bloch_data, title="3D Magnetization Traj
         line=dict(
             color=t,
             colorscale='Viridis',
-            width=5
+            width=6,
+            cmin=float(np.min(t)),
+            cmax=float(np.max(t)),
+            colorbar=dict(
+                title=dict(text="Time (ms)", font=dict(color='#94a3b8', size=12)),
+                thickness=12,
+                len=0.6,
+                x=1.05
+            )
         ),
         name='Trajectory M(t)',
         hovertemplate='t: %{line.color:.1f} ms<br>Mx: %{x:.2f}<br>My: %{y:.2f}<br>Mz: %{z:.2f}<extra></extra>'
@@ -106,7 +114,7 @@ def plot_bloch_magnetization_trajectory(bloch_data, title="3D Magnetization Traj
         x=[0, Mx[-1]], y=[0, My[-1]], z=[0, Mz[-1]],
         mode='lines+markers',
         line=dict(color='#ef4444', width=8),
-        marker=dict(size=[4, 8], color='#ef4444', symbol='diamond'),
+        marker=dict(size=[4, 9], color='#ef4444', symbol='diamond'),
         name='Final Magnetization'
     ))
     
@@ -116,7 +124,7 @@ def plot_bloch_magnetization_trajectory(bloch_data, title="3D Magnetization Traj
         y=[0, 0, None, -1.2, 1.2, None, 0, 0],
         z=[0, 0, None, 0, 0, None, -1.2, 1.2],
         mode='lines+text',
-        line=dict(color='rgba(255,255,255,0.4)', width=2, dash='dash'),
+        line=dict(color='rgba(148,163,184,0.4)', width=2, dash='dash'),
         text=['-X', '+X (B1)', '', '-Y', '+Y', '', '-Z', '+Z (B0)'],
         textposition='top center',
         showlegend=False,
@@ -124,17 +132,16 @@ def plot_bloch_magnetization_trajectory(bloch_data, title="3D Magnetization Traj
     ))
     
     fig.update_layout(
-        title=dict(text=f"<b>{title}</b>", font=dict(size=16, color='#1e293b')),
+        title=dict(text=f"<b>{title}</b>"),
         scene=dict(
-            xaxis_title='Mx (Transverse)',
-            yaxis_title='My (Transverse)',
-            zaxis_title='Mz (Longitudinal)',
+            xaxis=dict(title='Mx (Transverse)', backgroundcolor='rgba(0,0,0,0)'),
+            yaxis=dict(title='My (Transverse)', backgroundcolor='rgba(0,0,0,0)'),
+            zaxis=dict(title='Mz (Longitudinal)', backgroundcolor='rgba(0,0,0,0)'),
             aspectmode='cube',
             camera=dict(eye=dict(x=1.6, y=1.6, z=1.3))
         ),
-        width=750,
-        height=600,
-        margin=dict(l=0, r=0, t=60, b=0)
+        height=540,
+        margin=dict(l=0, r=0, t=50, b=0)
     )
     return fig
 
