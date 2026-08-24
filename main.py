@@ -612,3 +612,21 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# =========================================================================
+# VERCEL SERVERLESS RUNTIME COMPATIBILITY EXPORTS
+# =========================================================================
+class VercelWSGIApp:
+    def __call__(self, environ, start_response):
+        start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+        try:
+            with open('index.html', 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception:
+            content = "<h1>PhysicsMaster</h1><p>Platform is running.</p>"
+        return [content.encode('utf-8')]
+
+app = VercelWSGIApp()
+application = app
+handler = app
