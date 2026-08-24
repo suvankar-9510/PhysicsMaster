@@ -844,6 +844,88 @@ def calculate_fid_spectrum(bloch_data):
     }
 
 
+def calculate_phonon_velocities(k_vals, mass1_amu=28.0, mass2_amu=14.0, spring_C=30.0, a_ang=4.0):
+    """
+    Calculate acoustic and optical phase velocities v_p = omega / k and group velocities v_g = d(omega)/dk.
+    """
+    M1 = mass1_amu * 1.66054e-27
+    M2 = mass2_amu * 1.66054e-27
+    a_m = a_ang * 1e-10
+    
+    term_sum = spring_C * (1.0/M1 + 1.0/M2)
+    term_diff = (spring_C * (1.0/M1 + 1.0/M2))**2 - (4.0 * spring_C**2 * np.sin(k_vals/2.0)**2) / (M1 * M2)
+    
+    w_plus = np.sqrt(np.maximum(0.0, term_sum + np.sqrt(np.maximum(0.0, term_diff))))
+    w_minus = np.sqrt(np.maximum(0.0, term_sum - np.sqrt(np.maximum(0.0, term_diff))))
+    
+    # Numerical derivatives for group velocity: v_g = d(omega) / d(k_phys) = (d(omega)/dk) * a
+    k_phys = k_vals / a_m
+    dk = k_phys[1] - k_phys[0]
+    
+    vg_ac = np.gradient(w_minus, dk)
+    vg_op = np.gradient(w_plus, dk)
+    
+    # Phase velocities: v_p = omega / k_phys
+    k_nonzero = np.where(np.abs(k_phys) < 1e-6, 1e-6, k_phys)
+    vp_ac = w_minus / k_nonzero
+    vp_op = w_plus / k_nonzero
+    
+    return {
+        "k": k_vals,
+        "k_norm": k_vals / np.pi,
+        "omega_ac_THz": w_minus / (2.0 * np.pi * 1e12),
+        "omega_op_THz": w_plus / (2.0 * np.pi * 1e12),
+        "vg_ac_km_s": vg_ac / 1000.0,
+        "vg_op_km_s": vg_op / 1000.0,
+        "vp_ac_km_s": vp_ac / 1000.0,
+        "vp_op_km_s": vp_op / 1000.0
+    }
+
+
+def calculate_varshni_bandgap(material="Silicon", temperatures=None):
+    """
+    Calculate temperature-dependent semiconductor bandgap E_g(T) using Varshni's empirical relation:
+    E_g(T) = E_g(0) - alpha * T^2 / (T + beta)
+    """
+    if temperatures is None:
+        temperatures = np.linspace(0, 800, 200)
+        
+    params = {
+        "Silicon": {"Eg0": 1.170, "alpha": 4.73e-4, "beta": 636.0, "type": "Indirect (1.12 eV @ 300K)"},
+        "Germanium": {"Eg0": 0.744, "alpha": 4.77e-4, "beta": 235.0, "type": "Indirect (0.66 eV @ 300K)"},
+        "Gallium Arsenide (GaAs)": {"Eg0": 1.519, "alpha": 5.405e-4, "beta": 204.0, "type": "Direct (1.42 eV @ 300K)"},
+        "Gallium Nitride (GaN)": {"Eg0": 3.470, "alpha": 9.09e-4, "beta": 830.0, "type": "Direct (3.40 eV @ 300K)"},
+        "Diamond (C)": {"Eg0": 5.480, "alpha": 4.5e-4, "beta": 1050.0, "type": "Indirect (5.47 eV @ 300K)"},
+        "Indium Phosphide (InP)": {"Eg0": 1.424, "alpha": 4.50e-4, "beta": 327.0, "type": "Direct (1.34 eV @ 300K)"}
+    }
+    
+    p = params.get(material, params["Silicon"])
+    Eg_T = p["Eg0"] - (p["alpha"] * temperatures**2) / (temperatures + p["beta"])
+    
+    return {
+        "temperature": temperatures,
+        "bandgap_eV": Eg_T,
+        "material": material,
+        "type": p["type"],
+        "Eg_300K": p["Eg0"] - (p["alpha"] * 300.0**2) / (300.0 + p["beta"])
+    }
+
+
+def calculate_landau_free_energy_temperature(T_val, Tc=393.0, alpha_0=3.8e5, beta=-1.6e8, gamma=8.0e9):
+    """
+    Landau-Devonshire Free Energy F(P) as a function of temperature T across phase transition:
+    F(P) = (alpha_0*(T - Tc)/2)*P^2 + (beta/4)*P^4 + (gamma/6)*P^6
+    """
+    P = np.linspace(-0.5, 0.5, 400)
+    alpha = alpha_0 * (T_val - Tc)
+    F = 0.5 * alpha * (P**2) + 0.25 * beta * (P**4) + (1.0/6.0) * gamma * (P**6)
+    
+    return {
+        "polarization": P,
+        "free_energy": F / 1e6  # in MJ/m3
+    }
+
+
 # ============================================================================
 # 7. GENERAL OPTICS, WAVES & NUCLEAR HELPERS
 # ============================================================================

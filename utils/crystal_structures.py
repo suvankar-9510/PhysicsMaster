@@ -141,20 +141,106 @@ def generate_perovskite(a=1.0, n_cells=1):
     A_pts = []
     B_pts = []
     O_pts = []
-    
     for i in range(n_cells):
         for j in range(n_cells):
             for k in range(n_cells):
-                # A cation at corners
                 A_pts.append([i * a, j * a, k * a])
-                # B cation at body center
                 B_pts.append([(i + 0.5) * a, (j + 0.5) * a, (k + 0.5) * a])
-                # Oxygen at face centers
                 O_pts.append([(i + 0.5) * a, (j + 0.5) * a, k * a])
                 O_pts.append([(i + 0.5) * a, j * a, (k + 0.5) * a])
                 O_pts.append([i * a, (j + 0.5) * a, (k + 0.5) * a])
-                
-    return np.array(A_pts), np.array(B_pts), np.array(O_pts)
+    return np.array(A_pts, dtype=float), np.array(B_pts, dtype=float), np.array(O_pts, dtype=float)
+
+
+def generate_wurtzite(a=1.0, c_over_a=1.633, u=0.375, n_cells=1):
+    """
+    Generate Wurtzite (GaN, ZnO, CdS) hexagonal structure:
+    Cations (Ga) and Anions (N) forming interpenetrating HCP sublattices.
+    Returns (Ga_points, N_points).
+    """
+    c = a * c_over_a
+    ga_pts = []
+    n_pts = []
+    basis_ga = [
+        [0.0, 0.0, 0.0],
+        [1.0/3.0, 2.0/3.0, 0.5 * c]
+    ]
+    for i in range(n_cells):
+        for j in range(n_cells):
+            for k in range(n_cells):
+                r0 = np.array([i * a + j * 0.5 * a, j * np.sqrt(3)/2 * a, k * c])
+                for bg in basis_ga:
+                    ga_pos = r0 + bg
+                    n_pos = ga_pos + np.array([0.0, 0.0, u * c])
+                    ga_pts.append(ga_pos)
+                    n_pts.append(n_pos)
+    return np.array(ga_pts, dtype=float), np.array(n_pts, dtype=float)
+
+
+def generate_fluorite(a=1.0, n_cells=1):
+    """
+    Generate Fluorite (CaF2) crystal structure:
+    Ca2+ cations in FCC lattice, F- anions occupying all 8 tetrahedral interstitial sites.
+    Returns (Ca_points, F_points).
+    """
+    ca_pts = generate_fcc(a, n_cells)
+    f_pts = []
+    for i in range(n_cells):
+        for j in range(n_cells):
+            for k in range(n_cells):
+                for dx in [0.25, 0.75]:
+                    for dy in [0.25, 0.75]:
+                        for dz in [0.25, 0.75]:
+                            f_pts.append([(i + dx) * a, (j + dy) * a, (k + dz) * a])
+    return ca_pts, np.array(f_pts, dtype=float)
+
+
+def generate_graphene_sheet(a_cc=1.42, nx=3, ny=3):
+    """
+    Generate 2D honeycomb graphene monolayer sheet with C-C bond length a_cc.
+    """
+    a = a_cc * np.sqrt(3.0)
+    pts = []
+    for i in range(nx):
+        for j in range(ny):
+            x = i * a + (j % 2) * (a / 2.0)
+            y = j * (1.5 * a_cc)
+            pts.append([x, y, 0.0])
+            pts.append([x, y + a_cc, 0.0])
+    return np.array(pts, dtype=float)
+
+
+def generate_bonds_traces(points, min_dist=0.5, max_dist=2.6, color="rgba(148,163,184,0.6)", width=3):
+    """
+    Generate fast 3D stick bonds trace connecting all atom pairs within [min_dist, max_dist].
+    Uses single Scatter3d trace with None separators for optimal WebGL performance.
+    """
+    from scipy.spatial import cKDTree
+    if len(points) < 2:
+        return None
+        
+    tree = cKDTree(points)
+    pairs = tree.query_pairs(r=max_dist)
+    
+    bx, by, bz = [], [], []
+    for i, j in pairs:
+        dist = np.linalg.norm(points[i] - points[j])
+        if dist >= min_dist:
+            bx.extend([points[i, 0], points[j, 0], None])
+            by.extend([points[i, 1], points[j, 1], None])
+            bz.extend([points[i, 2], points[j, 2], None])
+            
+    if not bx:
+        return None
+        
+    return go.Scatter3d(
+        x=bx, y=by, z=bz,
+        mode='lines',
+        line=dict(color=color, width=width),
+        name='Atomic Bonds',
+        hoverinfo='skip',
+        showlegend=False
+    )
 
 
 # ============================================================================
@@ -310,6 +396,73 @@ def create_3d_brillouin_zone(lattice_type="FCC", k_scale=1.0):
             name='High-Symmetry Path (Γ-H-P-Γ-N)'
         ))
         title_str = "<b>BCC 1st Brillouin Zone (Rhombic Dodecahedron)</b>"
+        
+    elif lattice_type == "HCP":
+        s_k = scale * 0.4
+        c_k = scale * 0.35
+        v = []
+        for theta in np.linspace(0, 2*np.pi, 7)[:-1]:
+            x = s_k * np.cos(theta)
+            y = s_k * np.sin(theta)
+            v.append([x, y, c_k])
+            v.append([x, y, -c_k])
+        vertices = np.array(v)
+        hull = ConvexHull(vertices)
+        
+        fig.add_trace(go.Mesh3d(
+            x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+            i=hull.simplices[:, 0], j=hull.simplices[:, 1], k=hull.simplices[:, 2],
+            opacity=0.45,
+            color='#10b981',
+            name='1st BZ (Hexagonal Prism)',
+            hoverinfo='skip'
+        ))
+        for simplex in hull.simplices:
+            pts = vertices[simplex]
+            pts = np.vstack([pts, pts[0]])
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines',
+                line=dict(color='rgba(16, 185, 129, 0.8)', width=3),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            
+        hs_points = {
+            "Γ (0,0,0)": [0, 0, 0],
+            "M (0, 2π/√3a, 0)": [0, s_k * np.sqrt(3)/2, 0],
+            "K (2π/3a, 2π/√3a, 0)": [s_k * 0.5, s_k * np.sqrt(3)/2, 0],
+            "A (0, 0, π/c)": [0, 0, c_k],
+            "L (0, 2π/√3a, π/c)": [0, s_k * np.sqrt(3)/2, c_k],
+            "H (2π/3a, 2π/√3a, π/c)": [s_k * 0.5, s_k * np.sqrt(3)/2, c_k]
+        }
+        for name, pt in hs_points.items():
+            fig.add_trace(go.Scatter3d(
+                x=[pt[0]], y=[pt[1]], z=[pt[2]],
+                mode='markers+text',
+                marker=dict(size=8, color='#ef4444' if pt == [0,0,0] else '#f59e0b', symbol='diamond'),
+                text=[name],
+                textposition='top center',
+                name=name
+            ))
+            
+        path = np.array([
+            [0, 0, 0],
+            [0, s_k * np.sqrt(3)/2, 0],
+            [s_k * 0.5, s_k * np.sqrt(3)/2, 0],
+            [0, 0, 0],
+            [0, 0, c_k],
+            [0, s_k * np.sqrt(3)/2, c_k],
+            [s_k * 0.5, s_k * np.sqrt(3)/2, c_k],
+            [0, 0, c_k]
+        ])
+        fig.add_trace(go.Scatter3d(
+            x=path[:, 0], y=path[:, 1], z=path[:, 2],
+            mode='lines',
+            line=dict(color='#38bdf8', width=7),
+            name='High-Symmetry Path (Γ-M-K-Γ-A-L-H-A)'
+        ))
+        title_str = "<b>HCP 1st Brillouin Zone (Hexagonal Prism)</b>"
         
     else:  # Simple Cubic
         s = scale * 0.5

@@ -34,7 +34,10 @@ from utils.physics import (
     calculate_hall_effect,
     calculate_reststrahlen_reflectivity,
     calculate_dislocation_stress_field,
-    calculate_fid_spectrum
+    calculate_fid_spectrum,
+    calculate_phonon_velocities,
+    calculate_varshni_bandgap,
+    calculate_landau_free_energy_temperature
 )
 from utils.crystal_structures import (
     generate_simple_cubic,
@@ -46,6 +49,10 @@ from utils.crystal_structures import (
     generate_cscl,
     generate_hcp,
     generate_perovskite,
+    generate_wurtzite,
+    generate_fluorite,
+    generate_graphene_sheet,
+    generate_bonds_traces,
     create_3d_brillouin_zone,
     create_3d_ewald_sphere,
     create_crystal_defects_visualization
@@ -66,7 +73,6 @@ st.set_page_config(
 # Apply dynamic theme and render sidebar controls
 theme = render_theme_sidebar()
 dark = theme["dark"]
-plot_bg = theme["plot_bg"]
 text_primary = theme["text_primary"]
 text_secondary = theme["text_secondary"]
 card_bg = theme["card_bg"]
@@ -84,7 +90,7 @@ with st.sidebar:
     - **Tab 7:** Defects & Dislocations
     """)
 
-# Header
+# Header Banner
 st.markdown("""
 <div class="crystal-header">
     <div style="font-size: 2.4rem; margin-bottom: 6px;">🔷</div>
@@ -92,7 +98,7 @@ st.markdown("""
         Solid State Physics Laboratory
     </h1>
     <p style="color: rgba(255,255,255,0.92); margin: 0.6rem auto 0 auto; font-size: 1.1rem; max-width: 800px; font-weight: 300;">
-        Graduate & M.Sc Level Interactive Simulation Suite with Real-Time 3D WebGL Engines and Analytical Solvers.
+        Graduate & M.Sc Level Interactive Simulation Suite with Real-Time 3D WebGL Engines, Stick Bonds, and Analytical Solvers.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -100,9 +106,9 @@ st.markdown("""
 # 7 Graduate Tabs
 tabs = st.tabs([
     "🏗️ Crystal Architecture & Reciprocal Space",
-    "🔬 X-Ray Diffraction & Structure Factor",
+    "🔬 X-Ray Diffraction & Crystallography",
     "🌡️ Phonons & Lattice Dynamics",
-    "⚡ Electronic Band Theory & Transport",
+    "⚡ Electronic Band Theory & Quantum Transport",
     "🧲 Magnetic Resonance (NMR / EPR / FMR)",
     "⚡ Dielectrics, Polarization & Ferroelectrics",
     "🔬 Defects & Materials Engineering"
@@ -122,10 +128,10 @@ with tabs[0]:
     st.latex(r"\mathbf{R} = u\mathbf{a}_1 + v\mathbf{a}_2 + w\mathbf{a}_3, \quad \mathbf{b}_i \cdot \mathbf{a}_j = 2\pi \delta_{ij}")
     st.markdown(r"""
     <div class="theory-box" style="margin-top: -10px;">
-        The <strong>First Brillouin Zone</strong> is the Wigner-Seitz primitive cell of the reciprocal lattice, enclosing all uniquely defined crystal wavevectors \(\mathbf{k}\). Interplanar spacing for cubic systems is given by:
+        The <strong>First Brillouin Zone</strong> is the Wigner-Seitz primitive cell of the reciprocal lattice enclosing all uniquely defined crystal wavevectors \(\mathbf{k}\). Interplanar spacing for cubic systems:
     </div>
     """, unsafe_allow_html=True)
-    st.latex(r"d_{hkl} = \frac{a}{\sqrt{h^2 + k^2 + l^2}}")
+    st.latex(r"d_{hkl} = \frac{a}{\sqrt{h^2 + k^2 + l^2}}, \quad \rho = \frac{n M_{\text{mol}}}{N_A a^3}")
 
     col1, col2 = st.columns([1, 2.3], gap="large")
 
@@ -134,21 +140,30 @@ with tabs[0]:
         crystal_choice = st.selectbox(
             "Crystal System / Basis",
             [
-                "Face-Centered Cubic (FCC - Al, Cu, Au)",
-                "Body-Centered Cubic (BCC - Fe, Cr, W)",
+                "Face-Centered Cubic (FCC - Al, Cu, Au, Ni)",
+                "Body-Centered Cubic (BCC - Fe, Cr, W, Mo)",
                 "Simple Cubic (SC - Po)",
                 "Diamond Cubic (C, Si, Ge)",
-                "Zincblende (GaAs)",
-                "Rocksalt (NaCl)",
+                "Zincblende (GaAs, InSb, ZnS)",
+                "Rocksalt (NaCl, MgO, LiF)",
                 "Cesium Chloride (CsCl)",
                 "Hexagonal Close-Packed (HCP - Mg, Ti, Zn)",
-                "Perovskite (BaTiO3 / SrTiO3)"
+                "Perovskite (BaTiO3 / SrTiO3)",
+                "Wurtzite (GaN, ZnO, CdS)",
+                "Fluorite (CaF2, UO2)",
+                "2D Honeycomb Graphene Monolayer"
             ]
         )
 
         lattice_a = st.slider("Lattice Constant a (Å)", 2.0, 7.0, 4.0, 0.1)
         n_repeat = st.slider("Supercell Dimension (N×N×N)", 1, 4, 2)
         atom_scale = st.slider("Atomic Radius Scale", 0.2, 1.5, 0.6, 0.05)
+        
+        st.markdown("#### 🔬 Visualization Enhancements")
+        show_bonds = st.checkbox("Show Atomic Stick Bonds", value=True)
+        show_unit_box = st.checkbox("Show Unit Cell Bounding Wireframe", value=True)
+        thermal_vib = st.checkbox("Simulate Thermal Lattice Vibrations (Phonons)", value=False)
+        temp_vib = st.slider("Lattice Temperature T (K)", 10, 800, 300, 20) if thermal_vib else 0
         
         st.markdown("#### 📐 Miller Indices (h k l)")
         show_miller_plane = st.checkbox("Display Crystallographic Plane", value=True)
@@ -164,80 +179,142 @@ with tabs[0]:
 
     with col2:
         if view_mode == "3D First Brillouin Zone (Reciprocal)":
-            bz_type = "FCC" if "FCC" in crystal_choice or "Diamond" in crystal_choice or "Zincblende" in crystal_choice or "NaCl" in crystal_choice else "BCC" if "BCC" in crystal_choice or "CsCl" in crystal_choice else "SC"
+            if "HCP" in crystal_choice or "Wurtzite" in crystal_choice:
+                bz_type = "HCP"
+            elif "FCC" in crystal_choice or "Diamond" in crystal_choice or "Zincblende" in crystal_choice or "NaCl" in crystal_choice or "Fluorite" in crystal_choice:
+                bz_type = "FCC"
+            elif "BCC" in crystal_choice or "CsCl" in crystal_choice:
+                bz_type = "BCC"
+            else:
+                bz_type = "SC"
+                
             fig_bz = create_3d_brillouin_zone(bz_type, k_scale=1.0)
             fig_bz = apply_figure_theme(fig_bz, theme)
             st.plotly_chart(fig_bz, use_container_width=True)
         else:
             fig_crys = go.Figure()
+            all_pts = []
             
             if "Simple Cubic" in crystal_choice:
                 pts = generate_simple_cubic(lattice_a, n_repeat)
-                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#3b82f6'), name='Atoms'))
-                n_basis = 1
-                coord_num = 6
-                pack_eff = 52.4
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#3b82f6'), name='Po (SC)'))
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 1, 6, 52.4, 209.0
             elif "BCC" in crystal_choice:
                 pts = generate_bcc(lattice_a, n_repeat)
-                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#10b981'), name='BCC Atoms'))
-                n_basis = 2
-                coord_num = 8
-                pack_eff = 68.0
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#10b981'), name='Fe / Cr / W'))
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 2, 8, 68.0, 55.85
             elif "Diamond" in crystal_choice:
                 pts = generate_diamond_cubic(lattice_a, n_repeat)
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*26, color='#6366f1'), name='C / Si / Ge'))
-                n_basis = 8
-                coord_num = 4
-                pack_eff = 34.0
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 8, 4, 34.0, 28.08
             elif "Zincblende" in crystal_choice:
                 ga_pts, as_pts = generate_zincblende(lattice_a, n_repeat)
+                if thermal_vib:
+                    ga_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=ga_pts.shape)
+                    as_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=as_pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=ga_pts[:,0], y=ga_pts[:,1], z=ga_pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#3b82f6'), name='Ga (Cation)'))
                 fig_crys.add_trace(go.Scatter3d(x=as_pts[:,0], y=as_pts[:,1], z=as_pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#ef4444'), name='As (Anion)'))
-                n_basis = 8
-                coord_num = 4
-                pack_eff = 34.0
+                all_pts = np.vstack([ga_pts, as_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 8, 4, 34.0, 144.64
             elif "NaCl" in crystal_choice:
                 na_pts, cl_pts = generate_nacl(lattice_a, n_repeat)
+                if thermal_vib:
+                    na_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=na_pts.shape)
+                    cl_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=cl_pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=na_pts[:,0], y=na_pts[:,1], z=na_pts[:,2], mode='markers', marker=dict(size=atom_scale*24, color='#8b5cf6'), name='Na⁺'))
                 fig_crys.add_trace(go.Scatter3d(x=cl_pts[:,0], y=cl_pts[:,1], z=cl_pts[:,2], mode='markers', marker=dict(size=atom_scale*32, color='#10b981'), name='Cl⁻'))
-                n_basis = 8
-                coord_num = 6
-                pack_eff = 66.0
+                all_pts = np.vstack([na_pts, cl_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 8, 6, 66.0, 58.44
             elif "CsCl" in crystal_choice:
                 cs_pts, cl_pts = generate_cscl(lattice_a, n_repeat)
+                if thermal_vib:
+                    cs_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=cs_pts.shape)
+                    cl_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=cl_pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=cs_pts[:,0], y=cs_pts[:,1], z=cs_pts[:,2], mode='markers', marker=dict(size=atom_scale*34, color='#f59e0b'), name='Cs⁺'))
                 fig_crys.add_trace(go.Scatter3d(x=cl_pts[:,0], y=cl_pts[:,1], z=cl_pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#10b981'), name='Cl⁻'))
-                n_basis = 2
-                coord_num = 8
-                pack_eff = 68.0
+                all_pts = np.vstack([cs_pts, cl_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 2, 8, 68.0, 168.36
+            elif "Fluorite" in crystal_choice:
+                ca_pts, f_pts = generate_fluorite(lattice_a, n_repeat)
+                if thermal_vib:
+                    ca_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=ca_pts.shape)
+                    f_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=f_pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=ca_pts[:,0], y=ca_pts[:,1], z=ca_pts[:,2], mode='markers', marker=dict(size=atom_scale*30, color='#3b82f6'), name='Ca²⁺ (FCC)'))
+                fig_crys.add_trace(go.Scatter3d(x=f_pts[:,0], y=f_pts[:,1], z=f_pts[:,2], mode='markers', marker=dict(size=atom_scale*22, color='#10b981'), name='F⁻ (Tetrahedral)'))
+                all_pts = np.vstack([ca_pts, f_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 12, 8, 65.0, 78.08
+            elif "Wurtzite" in crystal_choice:
+                ga_pts, n_pts = generate_wurtzite(lattice_a, n_cells=n_repeat)
+                if thermal_vib:
+                    ga_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=ga_pts.shape)
+                    n_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=n_pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=ga_pts[:,0], y=ga_pts[:,1], z=ga_pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#3b82f6'), name='Ga'))
+                fig_crys.add_trace(go.Scatter3d(x=n_pts[:,0], y=n_pts[:,1], z=n_pts[:,2], mode='markers', marker=dict(size=atom_scale*22, color='#10b981'), name='N'))
+                all_pts = np.vstack([ga_pts, n_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 4, 4, 34.0, 83.73
+            elif "Graphene" in crystal_choice:
+                pts = generate_graphene_sheet(lattice_a/2.5, nx=n_repeat*2, ny=n_repeat*2)
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * (lattice_a/2.5), size=pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*26, color='#64748b'), name='C (sp² Honeycomb)'))
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 2, 3, 17.0, 12.01
             elif "Perovskite" in crystal_choice:
                 a_pts, b_pts, o_pts = generate_perovskite(lattice_a, n_repeat)
+                if thermal_vib:
+                    a_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=a_pts.shape)
+                    b_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=b_pts.shape)
+                    o_pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=o_pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=a_pts[:,0], y=a_pts[:,1], z=a_pts[:,2], mode='markers', marker=dict(size=atom_scale*32, color='#3b82f6'), name='A (Ba²⁺)'))
                 fig_crys.add_trace(go.Scatter3d(x=b_pts[:,0], y=b_pts[:,1], z=b_pts[:,2], mode='markers', marker=dict(size=atom_scale*24, color='#f59e0b'), name='B (Ti⁴⁺)'))
                 fig_crys.add_trace(go.Scatter3d(x=o_pts[:,0], y=o_pts[:,1], z=o_pts[:,2], mode='markers', marker=dict(size=atom_scale*20, color='#ef4444'), name='O (O²⁻)'))
-                n_basis = 5
-                coord_num = 12
-                pack_eff = 72.0
+                all_pts = np.vstack([a_pts, b_pts, o_pts])
+                n_basis, coord_num, pack_eff, mol_mass = 5, 12, 72.0, 233.19
+            elif "HCP" in crystal_choice:
+                pts = generate_hcp(lattice_a, n_cells=n_repeat)
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=pts.shape)
+                fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#10b981'), name='HCP Atoms (ABAB)'))
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 2, 12, 74.0, 24.31
             else:
                 pts = generate_fcc(lattice_a, n_repeat)
+                if thermal_vib:
+                    pts += np.random.normal(0, 0.015 * np.sqrt(temp_vib/300.0) * lattice_a, size=pts.shape)
                 fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#0284c7'), name='FCC Atoms'))
-                n_basis = 4
-                coord_num = 12
-                pack_eff = 74.0
+                all_pts = pts
+                n_basis, coord_num, pack_eff, mol_mass = 4, 12, 74.0, 26.98
+
+            # Add Real-Space Stick Bonds
+            if show_bonds and len(all_pts) > 0:
+                cutoff = 0.88 * lattice_a if ("Diamond" in crystal_choice or "Zincblende" in crystal_choice or "Graphene" in crystal_choice) else 0.72 * lattice_a
+                bonds_trace = generate_bonds_traces(all_pts, min_dist=0.3*lattice_a, max_dist=cutoff, width=3)
+                if bonds_trace:
+                    fig_crys.add_trace(bonds_trace)
 
             # Add 3D Unit Cell Wireframe Frame
             box_sz = n_repeat * lattice_a
-            bx = [0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, 0, None, 0, 0, None, box_sz, box_sz, None, box_sz, box_sz]
-            by = [0, 0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, None, 0, box_sz, None, 0, box_sz, None, 0, box_sz]
-            bz = [0, 0, 0, 0, 0, box_sz, box_sz, box_sz, box_sz, box_sz, None, box_sz, box_sz, None, box_sz, box_sz, None, 0, 0]
-            fig_crys.add_trace(go.Scatter3d(
-                x=bx, y=by, z=bz,
-                mode='lines',
-                line=dict(color='rgba(148,163,184,0.5)', width=2, dash='dot'),
-                name='Cell Boundary',
-                showlegend=False,
-                hoverinfo='skip'
-            ))
+            if show_unit_box:
+                bx = [0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, 0, None, 0, 0, None, box_sz, box_sz, None, box_sz, box_sz]
+                by = [0, 0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, None, 0, box_sz, None, 0, box_sz, None, 0, box_sz]
+                bz = [0, 0, 0, 0, 0, box_sz, box_sz, box_sz, box_sz, box_sz, None, box_sz, box_sz, None, box_sz, box_sz, None, 0, 0]
+                fig_crys.add_trace(go.Scatter3d(
+                    x=bx, y=by, z=bz,
+                    mode='lines',
+                    line=dict(color='rgba(148,163,184,0.5)', width=2, dash='dot'),
+                    name='Cell Boundary',
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
 
             # Miller Plane rendering
             if show_miller_plane and (mh != 0 or mk != 0 or ml != 0):
@@ -294,6 +371,7 @@ with tabs[0]:
         hkl_sq = mh**2 + mk**2 + ml**2
         d_spacing = lattice_a / np.sqrt(max(1, hkl_sq))
         vol_cell = lattice_a**3
+        density = (n_basis * mol_mass) / (6.022e23 * (lattice_a * 1e-8)**3)
         
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         with m_col1:
@@ -303,11 +381,11 @@ with tabs[0]:
         with m_col3:
             st.markdown(f"<div class='metric-card'><div class='metric-value'>{pack_eff:.1f}%</div><div class='metric-label'>Atomic Packing Factor</div></div>", unsafe_allow_html=True)
         with m_col4:
-            st.markdown(f"<div class='metric-card'><div class='metric-value'>{vol_cell:.1f} Å³</div><div class='metric-label'>Unit Cell Volume</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='metric-card'><div class='metric-value'>{density:.2f} g/cm³</div><div class='metric-label'>Calculated Density ρ</div></div>", unsafe_allow_html=True)
 
 
 # ============================================================================
-# TAB 2: X-RAY DIFFRACTION & STRUCTURE FACTOR
+# TAB 2: X-RAY DIFFRACTION & CRYSTALLOGRAPHY
 # ============================================================================
 with tabs[1]:
     st.markdown(r"""
@@ -319,19 +397,33 @@ with tabs[1]:
     st.latex(r"\Delta \mathbf{k} = \mathbf{k}' - \mathbf{k} = \mathbf{G}_{hkl}, \quad F_{hkl} = \sum_{j=1}^N f_j \exp\left[-2\pi i (h u_j + k v_j + l w_j)\right]")
     st.markdown(r"""
     <div class="theory-box" style="margin-top: -10px;">
-        Diffracted peak intensities incorporate structure factors, Lorentz-polarization factor \(\text{LP}(\theta)\), and Debye-Waller thermal damping \(e^{-2W}\):
+        Diffracted peak profiles incorporate structure factor, Lorentz-polarization, Debye-Waller damping, and Scherrer crystallite size broadening:
     </div>
     """, unsafe_allow_html=True)
-    st.latex(r"I_{hkl} \propto |F_{hkl}|^2 \left(\frac{1 + \cos^2 2\theta}{\sin^2\theta \cos\theta}\right) \exp\left[-2B\left(\frac{\sin\theta}{\lambda}\right)^2\right]")
+    st.latex(r"I_{hkl} \propto |F_{hkl}|^2 \left(\frac{1 + \cos^2 2\theta}{\sin^2\theta \cos\theta}\right) e^{-2B(\sin\theta/\lambda)^2}, \quad \text{FWHM } \beta = \frac{K\lambda}{D\cos\theta} + 4\varepsilon\tan\theta")
 
     xrd_col1, xrd_col2 = st.columns([1, 2.3], gap="large")
 
     with xrd_col1:
         st.markdown("#### 🔬 Diffractometer Parameters")
         xrd_lattice = st.selectbox("Sample Crystal Structure", ["FCC", "BCC", "Simple Cubic", "Diamond Cubic", "NaCl"], key="xrd_lat")
-        xrd_lambda = st.slider("X-ray Source (λ in Å)", 0.5, 2.5, 1.5406, 0.01, help="Cu K-alpha = 1.5406 Å, Mo K-alpha = 0.7107 Å")
+        
+        anode_source = st.selectbox(
+            "X-Ray Target Anode (λ in Å)",
+            [
+                "Cu Kα (1.5406 Å)",
+                "Mo Kα (0.7107 Å)",
+                "Co Kα (1.7890 Å)",
+                "Fe Kα (1.9360 Å)",
+                "Cr Kα (2.2897 Å)"
+            ]
+        )
+        xrd_lambda = 1.5406 if "Cu" in anode_source else 0.7107 if "Mo" in anode_source else 1.7890 if "Co" in anode_source else 1.9360 if "Fe" in anode_source else 2.2897
+        
         xrd_a = st.slider("Lattice Constant a (Å)", 2.5, 6.5, 4.05, 0.05, key="xrd_a_val")
-        temp_debye_waller = st.slider("Temperature Damping (Debye-Waller B in Å²)", 0.1, 2.0, 0.5, 0.1)
+        cryst_size_nm = st.slider("Crystallite Grain Size D (nm) [Scherrer]", 5, 100, 30, 5)
+        microstrain_val = st.slider("Microstrain ε (×10⁻³)", 0.0, 8.0, 1.5, 0.5) * 1e-3
+        temp_debye_waller = st.slider("Debye-Waller Thermal Factor B (Å²)", 0.1, 2.0, 0.5, 0.1)
         xrd_mode = st.radio("XRD View:", ["Powder Diffractogram (2θ vs Intensity)", "3D Ewald Sphere Geometry"])
 
     with xrd_col2:
@@ -357,14 +449,19 @@ with tabs[1]:
                         lp_factor = (1.0 + np.cos(2.0 * bragg_rad)**2) / (np.sin(bragg_rad)**2 * np.cos(bragg_rad) + 1e-4)
                         dw_factor = np.exp(-2.0 * temp_debye_waller * (np.sin(bragg_rad) / xrd_lambda)**2)
                         intensity = f_sq * lp_factor * dw_factor
-                        xrd_peaks.append((two_theta_deg, intensity, f"({h}{k}{l})", d_sp))
                         
-            two_theta_axis = np.linspace(10, 100, 1000)
+                        # Scherrer & Williamson-Hall FWHM in degrees
+                        scherrer_fwhm_rad = (0.9 * (xrd_lambda * 1e-10)) / ((cryst_size_nm * 1e-9) * np.cos(bragg_rad))
+                        strain_fwhm_rad = 4.0 * microstrain_val * np.tan(bragg_rad)
+                        total_fwhm_deg = np.degrees(scherrer_fwhm_rad + strain_fwhm_rad) + 0.1
+                        
+                        xrd_peaks.append((two_theta_deg, intensity, f"({h}{k}{l})", d_sp, total_fwhm_deg))
+                        
+            two_theta_axis = np.linspace(10, 100, 1200)
             diffractogram = np.zeros_like(two_theta_axis)
-            fwhm = 0.35
             
-            for tth, intens, label, d_val in xrd_peaks:
-                diffractogram += intens * np.exp(-4.0 * np.log(2.0) * ((two_theta_axis - tth) / fwhm)**2)
+            for tth, intens, label, d_val, fwhm_peak in xrd_peaks:
+                diffractogram += intens * np.exp(-4.0 * np.log(2.0) * ((two_theta_axis - tth) / max(0.08, fwhm_peak))**2)
                 
             max_int = np.max(diffractogram) + 1e-12
             diffractogram = (diffractogram / max_int) * 100.0
@@ -377,7 +474,7 @@ with tabs[1]:
                 name='Simulated Intensity'
             ))
             
-            for tth, intens, label, d_val in xrd_peaks:
+            for tth, intens, label, d_val, fwhm_peak in xrd_peaks:
                 if tth <= 100:
                     peak_h = (intens / np.max([p[1] for p in xrd_peaks])) * 100.0
                     fig_xrd.add_annotation(
@@ -393,7 +490,7 @@ with tabs[1]:
                     )
                     
             fig_xrd.update_layout(
-                title=f"<b>Powder X-Ray Diffractogram ({xrd_lattice}, λ = {xrd_lambda:.4f} Å)</b>",
+                title=f"<b>Powder XRD Pattern: {xrd_lattice} (Source: {anode_source.split(' ')[0]}, D={cryst_size_nm} nm)</b>",
                 xaxis_title="Diffraction Angle 2θ (degrees)",
                 yaxis=dict(title="Relative Intensity (%)", range=[0, 120]),
                 height=480
@@ -404,13 +501,14 @@ with tabs[1]:
             # Indexed Bragg Reflection Peaks Table
             if len(xrd_peaks) > 0:
                 table_rows = []
-                for tth, intens, label, d_val in sorted(xrd_peaks, key=lambda x: x[0]):
+                for tth, intens, label, d_val, fwhm_p in sorted(xrd_peaks, key=lambda x: x[0]):
                     if tth <= 100:
                         table_rows.append({
                             "Miller Index (hkl)": label,
                             "2θ Position (deg)": f"{tth:.2f}°",
                             "Bragg θ (deg)": f"{tth/2:.2f}°",
                             "d-spacing (Å)": f"{d_val:.4f}",
+                            "FWHM β (deg)": f"{fwhm_p:.3f}°",
                             "Relative Intensity (%)": f"{(intens/np.max([p[1] for p in xrd_peaks]))*100.0:.1f}%"
                         })
                 if len(table_rows) > 0:
@@ -431,10 +529,10 @@ with tabs[2]:
     st.latex(r"\omega_\pm^2(k) = C\left(\frac{1}{M_1} + \frac{1}{M_2}\right) \pm C\sqrt{\left(\frac{1}{M_1} + \frac{1}{M_2}\right)^2 - \frac{4\sin^2(ka/2)}{M_1 M_2}}")
     st.markdown(r"""
     <div class="theory-box" style="margin-top: -10px;">
-        The exact numerical Debye heat capacity integral accounting for 3D acoustic modes:
+        Phase and Group velocities govern acoustic transport, with \(v_g \to 0\) at the Brillouin zone boundary:
     </div>
     """, unsafe_allow_html=True)
-    st.latex(r"C_V(T) = 9 N k_B \left(\frac{T}{\Theta_D}\right)^3 \int_0^{\Theta_D/T} \frac{x^4 e^x}{(e^x - 1)^2} dx \quad \xrightarrow{T \ll \Theta_D} \quad \frac{12\pi^4}{5} N k_B \left(\frac{T}{\Theta_D}\right)^3")
+    st.latex(r"v_p(k) = \frac{\omega(k)}{k}, \quad v_g(k) = \frac{\partial\omega}{\partial k}, \quad C_V(T) = 9 N k_B \left(\frac{T}{\Theta_D}\right)^3 \int_0^{\Theta_D/T} \frac{x^4 e^x}{(e^x - 1)^2} dx")
 
     ph_col1, ph_col2 = st.columns([1, 2.3], gap="large")
 
@@ -450,7 +548,7 @@ with tabs[2]:
         gamma_el = st.slider("Electronic Sommerfeld γ (mJ/mol·K²)", 0.5, 10.0, 1.35, 0.1)
 
     with ph_col2:
-        ph_plot_mode = st.radio("Select Physics View:", ["Phonon Dispersion Curves ω(k)", "Phonon Density of States g(ω)", "Debye & Einstein Heat Capacity C_V(T)", "Electronic vs Lattice C/T vs T² Separation"], horizontal=True)
+        ph_plot_mode = st.radio("Select Physics View:", ["Phonon Dispersion Curves ω(k)", "Phonon Group & Phase Velocities v_g(k), v_p(k)", "Phonon Density of States g(ω)", "Debye & Einstein Heat Capacity C_V(T)", "Electronic vs Lattice C/T vs T² Separation"], horizontal=True)
 
         if "Dispersion" in ph_plot_mode:
             k_vals = np.linspace(-np.pi, np.pi, 500)
@@ -480,6 +578,28 @@ with tabs[2]:
             )
             fig_ph = apply_figure_theme(fig_ph, theme)
             st.plotly_chart(fig_ph, use_container_width=True)
+
+        elif "Velocities" in ph_plot_mode:
+            k_arr = np.linspace(0.01, np.pi, 300)
+            vel_data = calculate_phonon_velocities(k_arr, mass1_amu=mass1, mass2_amu=mass2, spring_C=spring_C)
+            
+            fig_vel = make_subplots(rows=1, cols=2, subplot_titles=["Group Velocity v_g = dω/dk (Energy Transport)", "Phase Velocity v_p = ω/k"])
+            fig_vel.add_trace(go.Scatter(x=vel_data["k_norm"], y=vel_data["vg_ac_km_s"], mode='lines', name='LA Group Velocity', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3)), row=1, col=1)
+            if "Diatomic" in chain_type:
+                fig_vel.add_trace(go.Scatter(x=vel_data["k_norm"], y=vel_data["vg_op_km_s"], mode='lines', name='LO Group Velocity', line=dict(color='#ef4444', width=3)), row=1, col=1)
+            fig_vel.add_hline(y=0, line=dict(color='gray', dash='dash'), row=1, col=1)
+            
+            fig_vel.add_trace(go.Scatter(x=vel_data["k_norm"], y=vel_data["vp_ac_km_s"], mode='lines', name='LA Phase Velocity', line=dict(color='#10b981', width=3)), row=1, col=2)
+            if "Diatomic" in chain_type:
+                fig_vel.add_trace(go.Scatter(x=vel_data["k_norm"], y=vel_data["vp_op_km_s"], mode='lines', name='LO Phase Velocity', line=dict(color='#f59e0b', width=3)), row=1, col=2)
+                
+            fig_vel.update_xaxes(title_text="Wavevector k (π/a)", row=1, col=1)
+            fig_vel.update_xaxes(title_text="Wavevector k (π/a)", row=1, col=2)
+            fig_vel.update_yaxes(title_text="Velocity (km/s)", row=1, col=1)
+            fig_vel.update_yaxes(title_text="Velocity (km/s)", row=1, col=2)
+            fig_vel.update_layout(height=460, title="<b>Phonon Group Velocity v_g(k) & Phase Velocity v_p(k): Zero Transport at BZ Boundary</b>")
+            fig_vel = apply_figure_theme(fig_vel, theme)
+            st.plotly_chart(fig_vel, use_container_width=True)
 
         elif "Density of States" in ph_plot_mode:
             dos_data = calculate_phonon_dos(omega_max=12.0)
@@ -554,7 +674,7 @@ with tabs[3]:
         "1D Kronig-Penney Model",
         "2D Graphene & Tight-Binding",
         "2D Fermi Surfaces & Brillouin Zones",
-        "Semiconductor Transport",
+        "Semiconductor Physics & Varshni Bandgap",
         "Hall Effect & Magnetoresistance"
     ])
 
@@ -633,14 +753,29 @@ with tabs[3]:
     with band_tab4:
         semi_col1, semi_col2 = st.columns([1, 2.3])
         with semi_col1:
+            st.markdown("#### 🔬 Semiconductor Carrier Statistics")
+            semi_mat = st.selectbox("Semiconductor Material", ["Silicon", "Germanium", "Gallium Arsenide (GaAs)", "Gallium Nitride (GaN)", "Diamond (C)", "Indium Phosphide (InP)"])
             doping_type = st.selectbox("Doping Type", ["n-type", "p-type", "Intrinsic"])
             doping_conc = st.number_input("Dopant Concentration (cm⁻³)", 1e14, 1e20, 1e16, format="%.1e")
-            temp_semi = st.slider("Temperature (K)", 100, 600, 300, 20)
+            temp_semi = st.slider("Temperature (K)", 50, 800, 300, 25)
         with semi_col2:
             n0, p0 = calculate_carrier_concentration(doping_type, doping_conc, temp_semi)
             mu_n = calculate_mobility("electron", temp_semi)
             mu_p = calculate_mobility("hole", temp_semi)
             sigma = (n0 * mu_n + p0 * mu_p) * 1.602e-19
+            
+            varshni_res = calculate_varshni_bandgap(semi_mat)
+            fig_varshni = go.Figure()
+            fig_varshni.add_trace(go.Scatter(x=varshni_res["temperature"], y=varshni_res["bandgap_eV"], mode='lines', name=f"Eg(T) - {semi_mat}", line=dict(color='#38bdf8' if dark else '#2563eb', width=3)))
+            fig_varshni.add_vline(x=temp_semi, line=dict(color='#ef4444', dash='dash'), annotation_text=f"T = {temp_semi} K")
+            fig_varshni.update_layout(
+                title=f"<b>Varshni Bandgap Temperature Dependence: {semi_mat} (Eg = {varshni_res['Eg_300K']:.2f} eV @ 300K)</b>",
+                xaxis_title="Temperature T (K)",
+                yaxis_title="Bandgap E_g (eV)",
+                height=340
+            )
+            fig_varshni = apply_figure_theme(fig_varshni, theme)
+            st.plotly_chart(fig_varshni, use_container_width=True)
             
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -766,7 +901,7 @@ with tabs[4]:
     elif "EPR / ESR" in mr_mode:
         epr_col1, epr_col2 = st.columns([1, 2.3])
         with epr_col1:
-            spin_i = st.selectbox("Coupled Nuclear Spin I", [0.5, 1.0, 1.5], help="I=1/2: 1H, 19F, 31P; I=1: 14N; I=3/2: 23Na, 35Cl")
+            spin_i = st.selectbox("Coupled Nuclear Spin I", [0.5, 1.0, 1.5, 2.5], help="I=1/2: 1H, 19F, 31P; I=1: 14N; I=3/2: 23Na, 35Cl; I=5/2: 55Mn")
             n_nuc = st.slider("Number of Equivalent Nuclei n", 1, 4, 1)
             a_hf = st.slider("Hyperfine Coupling a (Gauss)", 5.0, 60.0, 25.0, 2.0)
             lw = st.slider("Linewidth ΔB (Gauss)", 1.0, 10.0, 3.5, 0.5)
@@ -824,14 +959,14 @@ with tabs[5]:
         In polar crystals, coupling of optical phonons with electromagnetic photons yields <strong>Phonon-Polaritons</strong> governed by the <strong>Lyddane-Sachs-Teller (LST) relation</strong>:
     </div>
     """, unsafe_allow_html=True)
-    st.latex(r"\frac{\varepsilon_0}{\varepsilon_\infty} = \frac{\omega_{LO}^2}{\omega_{TO}^2}, \quad F(P) = \frac{\alpha_0(T - T_0)}{2} P^2 + \frac{\beta}{4} P^4 - E P")
+    st.latex(r"\frac{\varepsilon_0}{\varepsilon_\infty} = \frac{\omega_{LO}^2}{\omega_{TO}^2}, \quad F(P) = \frac{\alpha_0(T - T_c)}{2} P^2 + \frac{\beta}{4} P^4 + \frac{\gamma}{6} P^6 - E P")
 
     diel_view = st.radio(
         "Dielectric Laboratory Mode:",
         [
             "Broadband Dielectric Spectroscopy (4 Mechanisms)",
             "Debye Dielectric Relaxation & Cole-Cole Arc",
-            "Ferroelectric P-E Hysteresis & Landau Theory",
+            "Ferroelectric P-E Hysteresis & Landau Phase Transitions",
             "Phonon-Polaritons & LST Reststrahlen Band"
         ],
         horizontal=True
@@ -886,22 +1021,24 @@ with tabs[5]:
             p_sat = st.slider("Spontaneous Polarization P_s (µC/cm²)", 10.0, 60.0, 35.0, 5.0)
             p_rem = st.slider("Remnant Polarization P_r (µC/cm²)", 5.0, p_sat, min(28.0, p_sat), 2.0)
             e_coercive = st.slider("Coercive Field E_c (kV/cm)", 5.0, 40.0, 15.0, 2.0)
+            temp_landau = st.slider("Temperature T (K) [Curie Tc = 393 K]", 250, 500, 300, 10)
         with fe_col2:
             hyst_data = simulate_ferroelectric_hysteresis(E_max=50.0, Ec=e_coercive, Ps=p_sat, Pr=p_rem)
+            landau_T = calculate_landau_free_energy_temperature(temp_landau)
             
-            fig_fe = make_subplots(rows=1, cols=2, subplot_titles=["P-E Ferroelectric Hysteresis Loop", "Landau Double-Well Free Energy F(P)"])
+            fig_fe = make_subplots(rows=1, cols=2, subplot_titles=["P-E Ferroelectric Hysteresis Loop", f"Landau Double-Well Potential F(P) @ {temp_landau} K"])
             fig_fe.add_trace(go.Scatter(x=hyst_data["electric_field"], y=hyst_data["polarization"], mode='lines', name='P(E) Loop', line=dict(color='#38bdf8' if dark else '#2563eb', width=3.5)), row=1, col=1)
             
             fig_fe.add_trace(go.Scatter(x=[0, 0], y=[p_rem, -p_rem], mode='markers', name='Remnant P_r', marker=dict(size=10, color='#ef4444', symbol='diamond')), row=1, col=1)
             fig_fe.add_trace(go.Scatter(x=[e_coercive, -e_coercive], y=[0, 0], mode='markers', name='Coercive E_c', marker=dict(size=10, color='#10b981', symbol='square')), row=1, col=1)
             
-            fig_fe.add_trace(go.Scatter(x=hyst_data["P_range"], y=hyst_data["free_energy"], mode='lines', name='F(P)', line=dict(color='#8b5cf6', width=3)), row=1, col=2)
+            fig_fe.add_trace(go.Scatter(x=landau_T["polarization"], y=landau_T["free_energy"], mode='lines', name='F(P)', line=dict(color='#8b5cf6', width=3)), row=1, col=2)
             
             fig_fe.update_xaxes(title_text="Electric Field E (kV/cm)", row=1, col=1)
             fig_fe.update_yaxes(title_text="Polarization P (µC/cm²)", row=1, col=1)
-            fig_fe.update_xaxes(title_text="Polarization P (µC/cm²)", row=1, col=2)
-            fig_fe.update_yaxes(title_text="Landau Energy F(P)", row=1, col=2)
-            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Free Energy</b>")
+            fig_fe.update_xaxes(title_text="Polarization P (C/m²)", row=1, col=2)
+            fig_fe.update_yaxes(title_text="Landau Free Energy F(P) (MJ/m³)", row=1, col=2)
+            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Phase Transition</b>")
             fig_fe = apply_figure_theme(fig_fe, theme)
             st.plotly_chart(fig_fe, use_container_width=True)
 
