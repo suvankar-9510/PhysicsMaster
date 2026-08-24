@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysicsMaster - Advanced Graduate & M.Sc Physics Suite</title>
+    <link rel="icon" href="generated-icon.png" type="image/png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Plotly.js for 3D WebGL in browser -->
+    <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphism Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1rem 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-badge {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid var(--accent);
+            color: #818cf8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        /* Hero Banner */
+        .hero {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.85) 0%, rgba(147, 51, 234, 0.85) 50%, rgba(219, 39, 119, 0.75) 100%);
+            backdrop-filter: blur(25px);
+            border-radius: 28px;
+            padding: 4rem 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 25px 60px -12px rgba(79, 70, 229, 0.4);
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            top: -150px;
+            right: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 3.4rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 1.2rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 800px;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.9rem 1.8rem;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+
+        /* Interactive 3D Sandbox */
+        .sandbox-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .sandbox-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        #plot-container {
+            width: 100%;
+            height: 480px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* 8 Domain Cards Grid */
+        .grid-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .grid-title h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .domain-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--card-border);
+            border-radius: 22px;
+            padding: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.35s ease;
+        }
+
+        .domain-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px var(--accent-glow);
+            border-color: var(--accent);
+        }
+
+        .domain-icon {
+            font-size: 2.6rem;
+            margin-bottom: 12px;
+        }
+
+        .domain-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .domain-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        .formula {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #c7d2fe;
+            margin-bottom: 14px;
+        }
+
+        .feature-list {
+            list-style: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .feature-list li::before {
+            content: "• ";
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 1rem;
+            border-top: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.4rem; }
+            .hero { padding: 2.5rem 1.5rem; }
+            .navbar { flex-direction: column; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="#" class="nav-logo">
+                <span>⚛️</span>
+                <span>PhysicsMaster</span>
+                <span class="nav-badge">M.Sc Suite</span>
+            </a>
+            <div class="nav-links">
+                <a href="#sandbox" class="nav-link">Live 3D Sandbox</a>
+                <a href="#domains" class="nav-link">Laboratories</a>
+                <a href="https://github.com/suvankar-9510/PhysicsMaster" target="_blank" class="nav-link">GitHub</a>
+                <a href="https://share.streamlit.io/" target="_blank" class="btn btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.88rem;">Launch Streamlit Cloud</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-glow"></div>
+            <div class="badge-group">
+                <span class="badge">🎓 Graduate & M.Sc Standard</span>
+                <span class="badge">⚡ Real-Time Numerical Solvers</span>
+                <span class="badge">🧊 3D WebGL Visualizations</span>
+            </div>
+            <h1>Explore the Fabric of the Physical Universe</h1>
+            <p>
+                A research-grade computational physics platform featuring 3D interactive simulations across 
+                <strong>Solid State Physics (NMR/EPR/FMR, Dielectrics, Brillouin Zones)</strong>, 
+                <strong>Quantum Mechanics</strong>, <strong>Superconductivity</strong>, and <strong>Electromagnetism</strong>.
+            </p>
+            <div class="btn-group">
+                <a href="https://share.streamlit.io/" target="_blank" class="btn btn-primary">
+                    🚀 Launch Full Interactive Platform
+                </a>
+                <a href="https://github.com/suvankar-9510/PhysicsMaster" target="_blank" class="btn btn-secondary">
+                    📂 View Source on GitHub
+                </a>
+            </div>
+        </div>
+
+        <!-- 3D Interactive WebGL Sandbox -->
+        <section id="sandbox" class="sandbox-section">
+            <div class="sandbox-header">
+                <div>
+                    <span class="badge" style="background: rgba(99,102,241,0.25); color: #818cf8; border-color: var(--accent);">Live WebGL Simulation</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 6px;">Real-Time Physics Playground</h2>
+                </div>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="renderPlot('fcc')">🔷 3D Brillouin Zone (FCC)</button>
+                    <button class="tab-btn" onclick="renderPlot('bloch')">🧲 3D Spin Resonance (NMR)</button>
+                    <button class="tab-btn" onclick="renderPlot('waves')">🌊 Multi-Wave Superposition</button>
+                    <button class="tab-btn" onclick="renderPlot('dielectric')">⚡ Dielectric Dispersion</button>
+                </div>
+            </div>
+            <div id="plot-container"></div>
+        </section>
+
+        <!-- 8 Graduate Domain Laboratories -->
+        <section id="domains">
+            <div class="grid-title">
+                <h2>🎓 Specialized Physics Laboratories</h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem;">Rigorous mathematical formulations and interactive 3D simulations.</p>
+            </div>
+
+            <div class="domain-grid">
+                <!-- 1. Solid State Physics -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">🔷</div>
+                        <h3>Solid State Physics</h3>
+                        <p>Crystal lattices, Band Theory, Phonons, Magnetic Resonance & Dielectrics.</p>
+                        <div class="formula">E(k) = E_0 - 2t\cos(ka)</div>
+                        <ul class="feature-list">
+                            <li>3D First Brillouin Zones (Truncated Octahedron)</li>
+                            <li>Exact Debye Heat Capacity C_V(T)</li>
+                            <li>Bloch Equation 3D NMR/EPR Dynamics</li>
+                            <li>Ferroelectric P-E Hysteresis & Polaritons</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Solid State →</a>
+                </div>
+
+                <!-- 2. Optics & Photonics -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">🔭</div>
+                        <h3>Optics & Photonics</h3>
+                        <p>Jones polarization calculus, Fabry-Pérot cavities & diffraction gratings.</p>
+                        <div class="formula">n_1 \sin\theta_1 = n_2 \sin\theta_2</div>
+                        <ul class="feature-list">
+                            <li>Poincaré Sphere Polarization States</li>
+                            <li>Fabry-Pérot Cavity Transmission</li>
+                            <li>Fraunhofer Slit Diffraction Patterns</li>
+                            <li>Lens Aberration Transfer Matrices</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Optics →</a>
+                </div>
+
+                <!-- 3. Waves & Oscillations -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">🌊</div>
+                        <h3>Waves & Oscillations</h3>
+                        <p>Fourier synthesis, dispersive wavepackets & 2D Chladni resonance plates.</p>
+                        <div class="formula">v_g = d\omega/dk, \quad v_p = \omega/k</div>
+                        <ul class="feature-list">
+                            <li>2D Chladni Plate Eigenmodes</li>
+                            <li>Dispersive Wavepacket Evolution</li>
+                            <li>Harmonic Fourier Synthesis</li>
+                            <li>Doppler Shock Wave Fronts</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Waves →</a>
+                </div>
+
+                <!-- 4. Nuclear Physics -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">☢️</div>
+                        <h3>Nuclear Physics</h3>
+                        <p>Liquid drop SEMF, Bateman decay chains & nuclear shell magic numbers.</p>
+                        <div class="formula">B(A,Z) = a_v A - a_s A^{2/3} - \dots</div>
+                        <ul class="feature-list">
+                            <li>Semi-Empirical Mass Formula (SEMF)</li>
+                            <li>Bateman Multi-Step Decay Chains</li>
+                            <li>Q-Value Kinematics & Fission</li>
+                            <li>Nuclear Magic Number Shell Levels</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Nuclear →</a>
+                </div>
+
+                <!-- 5. Superconductivity -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">❄️</div>
+                        <h3>Superconductivity</h3>
+                        <p>London penetration, BCS energy gap, Abrikosov vortex lattices & SQUIDs.</p>
+                        <div class="formula">\Delta(T) \approx 1.764 k_B T_c \tanh(...)</div>
+                        <ul class="feature-list">
+                            <li>3D Meissner Effect Field Expulsion</li>
+                            <li>Ginzburg-Landau Vortex Lattice</li>
+                            <li>BCS Gap Energy Dynamics</li>
+                            <li>AC/DC Josephson Quantum SQUID</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Superconductivity →</a>
+                </div>
+
+                <!-- 6. Quantum Physics -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">🌌</div>
+                        <h3>Quantum Physics</h3>
+                        <p>Schrödinger wave mechanics, barrier tunneling & 3D Bloch sphere.</p>
+                        <div class="formula">-\frac{\hbar^2}{2m}\nabla^2\psi + V\psi = E\psi</div>
+                        <ul class="feature-list">
+                            <li>3D Bloch Qubit State Vector</li>
+                            <li>Harmonic Oscillator Wavefunctions</li>
+                            <li>Finite Barrier Quantum Tunneling</li>
+                            <li>Hydrogen Radial Probability Profiles</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Quantum →</a>
+                </div>
+
+                <!-- 7. AI Physics Assistant -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">🧠</div>
+                        <h3>AI Physics Assistant</h3>
+                        <p>Mathematical physics solver powered by LLMs with LaTeX reasoning.</p>
+                        <div class="formula">\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0\epsilon_0\frac{\partial\mathbf{E}}{\partial t}</div>
+                        <ul class="feature-list">
+                            <li>Step-by-Step Mathematical Proofs</li>
+                            <li>Socratic Physical Intuition</li>
+                            <li>M.Sc Problem Set Solver</li>
+                            <li>Multi-Model Architecture</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch AI Assistant →</a>
+                </div>
+
+                <!-- 8. Physics Glossary -->
+                <div class="domain-card">
+                    <div>
+                        <div class="domain-icon">📚</div>
+                        <h3>Physics Glossary</h3>
+                        <p>Searchable graduate concept definitions with interactive calculators.</p>
+                        <div class="formula">\oint \mathbf{E} \cdot d\mathbf{A} = \frac{Q_{\text{enc}}}{\epsilon_0}</div>
+                        <ul class="feature-list">
+                            <li>100+ Graduate Concepts</li>
+                            <li>Instant LaTeX Formulas</li>
+                            <li>Physical Constants Matrix</li>
+                            <li>Cross-Module Reference</li>
+                        </ul>
+                    </div>
+                    <a href="https://share.streamlit.io/" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Launch Glossary →</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p><strong>PhysicsMaster v2.5 M.Sc Suite</strong> | Ready for GitHub & Cloud Hosting</p>
+            <p style="margin-top: 6px; font-size: 0.8rem; color: #64748b;">Designed for physicists, researchers, and students globally.</p>
+        </footer>
+    </div>
+
+    <!-- Interactive 3D WebGL Visualizer Script -->
+    <script>
+        function renderPlot(type) {
+            // Update active button state
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const container = document.getElementById('plot-container');
+
+            if (type === 'fcc') {
+                // 3D Truncated Octahedron (FCC First Brillouin Zone)
+                const scale = 2.0 * Math.PI;
+                const vertices = [
+                    [0, -1, -2], [0, -1, 2], [0, 1, -2], [0, 1, 2],
+                    [-1, 0, -2], [-1, 0, 2], [1, 0, -2], [1, 0, 2],
+                    [-1, -2, 0], [-1, 2, 0], [1, -2, 0], [1, 2, 0],
+                    [0, -2, -1], [0, -2, 1], [0, 2, -1], [0, 2, 1],
+                    [-2, 0, -1], [-2, 0, 1], [2, 0, -1], [2, 0, 1],
+                    [-2, -1, 0], [-2, 1, 0], [2, -1, 0], [2, 1, 0]
+                ].map(v => [v[0]*0.5*scale*0.5, v[1]*0.5*scale*0.5, v[2]*0.5*scale*0.5]);
+
+                const traceMesh = {
+                    type: 'mesh3d',
+                    x: vertices.map(v => v[0]),
+                    y: vertices.map(v => v[1]),
+                    z: vertices.map(v => v[2]),
+                    alphahull: 0,
+                    opacity: 0.4,
+                    color: '#3b82f6',
+                    name: '1st Brillouin Zone'
+                };
+
+                const tracePath = {
+                    type: 'scatter3d',
+                    mode: 'lines+markers',
+                    x: [0, scale*0.25, scale*0.25, 0, scale*0.125],
+                    y: [0, 0, scale*0.125, 0, scale*0.125],
+                    z: [0, 0, 0, 0, scale*0.125],
+                    line: { color: '#10b981', width: 6 },
+                    marker: { size: 6, color: '#f59e0b' },
+                    name: 'High-Symmetry Path (Γ-X-W-Γ-L)'
+                };
+
+                const layout = {
+                    title: { text: '<b>FCC 1st Brillouin Zone (Reciprocal BCC - Truncated Octahedron)</b>', font: { color: '#f8fafc', size: 16 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    scene: {
+                        xaxis: { title: 'kx', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        yaxis: { title: 'ky', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        zaxis: { title: 'kz', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        aspectmode: 'cube'
+                    },
+                    margin: { l: 0, r: 0, t: 40, b: 0 }
+                };
+
+                Plotly.newPlot(container, [traceMesh, tracePath], layout, { responsive: true });
+
+            } else if (type === 'bloch') {
+                // 3D Bloch Sphere Magnetization Trajectory
+                const t = Array.from({length: 300}, (_, i) => i * 0.1);
+                const Mx = t.map(val => Math.sin(val * 1.5) * Math.exp(-val / 8.0));
+                const My = t.map(val => Math.cos(val * 1.5) * Math.exp(-val / 8.0));
+                const Mz = t.map(val => 1.0 - Math.exp(-val / 15.0));
+
+                const traceTraj = {
+                    type: 'scatter3d',
+                    mode: 'lines',
+                    x: Mx, y: My, z: Mz,
+                    line: { color: t, colorscale: 'Viridis', width: 6 },
+                    name: 'Magnetization M(t)'
+                };
+
+                const traceVector = {
+                    type: 'scatter3d',
+                    mode: 'lines+markers',
+                    x: [0, Mx[Mx.length-1]], y: [0, My[My.length-1]], z: [0, Mz[Mz.length-1]],
+                    line: { color: '#ef4444', width: 8 },
+                    marker: { size: [4, 8], color: '#ef4444' },
+                    name: 'M_final'
+                };
+
+                const layout = {
+                    title: { text: '<b>3D Bloch Equations Magnetization Precession & Relaxation</b>', font: { color: '#f8fafc', size: 16 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    scene: {
+                        xaxis: { title: 'Mx (Transverse)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        yaxis: { title: 'My (Transverse)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        zaxis: { title: 'Mz (Longitudinal)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                        aspectmode: 'cube'
+                    },
+                    margin: { l: 0, r: 0, t: 40, b: 0 }
+                };
+
+                Plotly.newPlot(container, [traceTraj, traceVector], layout, { responsive: true });
+
+            } else if (type === 'waves') {
+                // Multi-wave interference
+                const x = Array.from({length: 400}, (_, i) => i * 0.05);
+                const w1 = x.map(v => 1.0 * Math.sin(v) * Math.exp(-0.03 * v));
+                const w2 = x.map(v => 0.8 * Math.sin(1.3 * v + 0.8) * Math.exp(-0.02 * v));
+                const superpos = x.map((v, i) => w1[i] + w2[i]);
+
+                const trace1 = { x: x, y: w1, mode: 'lines', name: 'Wave 1 [ω₁]', line: { color: '#3b82f6', width: 2 } };
+                const trace2 = { x: x, y: w2, mode: 'lines', name: 'Wave 2 [ω₂]', line: { color: '#ec4899', width: 2 } };
+                const traceTot = { x: x, y: superpos, mode: 'lines', name: 'Superposition Ψ_tot', line: { color: '#10b981', width: 3.5 }, fill: 'tozeroy', fillcolor: 'rgba(16,185,129,0.15)' };
+
+                const layout = {
+                    title: { text: '<b>Coherent Wave Superposition & Interference Dynamics</b>', font: { color: '#f8fafc', size: 16 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(15,23,42,0.6)',
+                    xaxis: { title: 'Position x', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                    yaxis: { title: 'Amplitude Ψ(x)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                    margin: { l: 50, r: 30, t: 50, b: 40 }
+                };
+
+                Plotly.newPlot(container, [trace1, trace2, traceTot], layout, { responsive: true });
+
+            } else {
+                // Dielectric dispersion
+                const f = Array.from({length: 200}, (_, i) => Math.pow(10, 1 + i * 0.07));
+                const eps1 = f.map(freq => 2.0 + 20.0 / (1.0 + Math.pow(freq/1e3, 2)) + 12.0 / (1.0 + Math.pow(freq/1e8, 2)));
+                const eps2 = f.map(freq => 20.0 * (freq/1e3) / (1.0 + Math.pow(freq/1e3, 2)) + 12.0 * (freq/1e8) / (1.0 + Math.pow(freq/1e8, 2)));
+
+                const traceReal = { x: f, y: eps1, mode: 'lines', name: "ε'(f) Storage", line: { color: '#3b82f6', width: 3 } };
+                const traceImag = { x: f, y: eps2, mode: 'lines', name: 'ε"(f) Loss', line: { color: '#ef4444', width: 2.5, dash: 'dot' } };
+
+                const layout = {
+                    title: { text: '<b>Broadband Dielectric Permittivity & Relaxation Losses</b>', font: { color: '#f8fafc', size: 16 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(15,23,42,0.6)',
+                    xaxis: { type: 'log', title: 'Frequency f (Hz)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                    yaxis: { title: 'Permittivity ε(f)', gridcolor: 'rgba(255,255,255,0.1)', color: '#94a3b8' },
+                    margin: { l: 50, r: 30, t: 50, b: 40 }
+                };
+
+                Plotly.newPlot(container, [traceReal, traceImag], layout, { responsive: true });
+            }
+        }
+
+        // Initial render
+        window.addEventListener('DOMContentLoaded', () => renderPlot('fcc'));
+    </script>
+</body>
+</html>
