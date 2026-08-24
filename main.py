@@ -407,12 +407,15 @@ def main():
     # =========================================================================
     # 8 FEATURED PHYSICS DOMAINS (M.Sc Standard)
     # =========================================================================
-    st.markdown("""
+    # =========================================================================
+    # 8 FEATURED PHYSICS DOMAINS (M.Sc Standard)
+    # =========================================================================
+    st.markdown(f"""
     <div id="explore-domains" style="margin: 3.5rem 0 1.5rem 0; text-align: center;">
-        <h2 style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">
+        <h2 style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; color: {text_primary};">
             🎓 Specialized Physics Laboratories
         </h2>
-        <p style="color: #64748b; font-size: 1.1rem; max-width: 750px; margin: 0.5rem auto 2rem auto;">
+        <p style="color: {text_secondary}; font-size: 1.1rem; max-width: 750px; margin: 0.5rem auto 2rem auto;">
             Choose a physics domain to launch dedicated 3D interactive laboratories with advanced parameter controls and analytical solvers.
         </p>
     </div>
@@ -422,14 +425,14 @@ def main():
     
     # 1. Solid State Physics
     with dom_cols1[0]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">🔷</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Solid State Physics</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Crystal lattices, Band Theory, Phonons, Magnetic Resonance & Dielectrics.</p>
-                <div class="math-formula">E(k) = E_0 - 2t\\cos(ka)</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Solid State Physics</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Crystal lattices, Band Theory, Phonons, Magnetic Resonance & Dielectrics.</p>
+                <div class="math-formula">E(k) = E_0 - 2t \\cos(ka)</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • 3D First Brillouin Zones<br>
                     • Exact Debye Heat Capacity<br>
                     • NMR/EPR Bloch Dynamics<br>
@@ -443,14 +446,14 @@ def main():
 
     # 2. Optics & Photonics
     with dom_cols1[1]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">🔭</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Optics & Photonics</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Ray matrices, Jones polarization calculus, cavities & diffraction gratings.</p>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Optics & Photonics</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Ray matrices, Jones polarization calculus, cavities & diffraction gratings.</p>
                 <div class="math-formula">n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • Poincaré Sphere Polarization<br>
                     • Fabry-Pérot Resonator<br>
                     • Fraunhofer Slit Diffraction<br>
@@ -464,14 +467,14 @@ def main():
 
     # 3. Waves & Oscillations
     with dom_cols1[2]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">🌊</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Waves & Oscillations</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Fourier synthesis, dispersive wavepackets & 2D Chladni plates.</p>
-                <div class="math-formula">v_g = \\frac{d\\omega}{dk},\\quad v_p = \\frac{\\omega}{k}</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Waves & Oscillations</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Fourier synthesis, dispersive wavepackets & 2D Chladni plates.</p>
+                <div class="math-formula">v_g = d\\omega/dk, \\quad v_p = \\omega/k</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • 2D Chladni Eigenmodes<br>
                     • Wavepacket Dispersal<br>
                     • Fourier Harmonic Builder<br>
@@ -485,14 +488,14 @@ def main():
 
     # 4. Nuclear Physics
     with dom_cols1[3]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">⚛️</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Nuclear Physics</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Liquid drop SEMF, Bateman decay chains & nuclear shell model.</p>
-                <div class="math-formula">B(A,Z) = a_v A - a_s A^{2/3} - \\dots</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Nuclear Physics</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Liquid drop SEMF, Bateman decay chains & nuclear shell model.</p>
+                <div class="math-formula">B(A,Z) = a_v A - a_s A^{{2/3}} - \\dots</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • Semi-Empirical Mass Formula<br>
                     • Bateman Decay Chain ODEs<br>
                     • Q-Value Reaction Kinematics<br>
@@ -509,14 +512,14 @@ def main():
 
     # 5. Superconductivity
     with dom_cols2[0]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">❄️</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Superconductivity</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">London theory, BCS energy gap, Abrikosov vortex lattices & SQUIDs.</p>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Superconductivity</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">London theory, BCS energy gap, Abrikosov vortex lattices & SQUIDs.</p>
                 <div class="math-formula">\\Delta(T) \\approx 1.764 k_B T_c \\tanh(...)</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • Meissner Effect Simulator<br>
                     • Ginzburg-Landau Vortex Lattice<br>
                     • BCS Gap Energy Dynamics<br>
@@ -530,14 +533,14 @@ def main():
 
     # 6. Quantum Physics
     with dom_cols2[1]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">🌌</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Quantum Physics</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Schrödinger equation, finite barrier tunneling & 3D Bloch sphere.</p>
-                <div class="math-formula">-\\frac{\\hbar^2}{2m}\\nabla^2\\psi + V\\psi = E\\psi</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Quantum Physics</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Schrödinger equation, finite barrier tunneling & 3D Bloch sphere.</p>
+                <div class="math-formula">-\\frac{{\\hbar^2}}{{2m}}\\nabla^2\\psi + V\\psi = E\\psi</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • 3D Bloch Qubit States<br>
                     • Harmonic Oscillator Modes<br>
                     • Quantum Barrier Tunneling<br>
@@ -551,14 +554,14 @@ def main():
 
     # 7. AI Physics Assistant
     with dom_cols2[2]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">🧠</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">AI Physics Assistant</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Intelligent mathematical problem solver with LaTeX rendering.</p>
-                <div class="math-formula">\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} + \\mu_0\\epsilon_0\\frac{\\partial\\mathbf{E}}{\\partial t}</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">AI Physics Assistant</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Intelligent mathematical problem solver with LaTeX rendering.</p>
+                <div class="math-formula">\\nabla \\times \\mathbf{{B}} = \\mu_0 \\mathbf{{J}} + \\mu_0\\epsilon_0\\frac{{\\partial\\mathbf{{E}}}}{{\\partial t}}</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • Step-by-Step Derivations<br>
                     • Conceptual Socratic Hints<br>
                     • M.Sc Exam Problem Presets<br>
@@ -572,14 +575,14 @@ def main():
 
     # 8. Physics Glossary & Matrix
     with dom_cols2[3]:
-        st.markdown("""
+        st.markdown(f"""
         <div class="domain-card">
             <div>
                 <span class="domain-icon">📚</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Physics Glossary</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin: 6px 0 12px 0;">Searchable graduate concept definitions with interactive calculators.</p>
-                <div class="math-formula">\\oint \\mathbf{E} \\cdot d\\mathbf{A} = \\frac{Q_{\\text{enc}}}{\\epsilon_0}</div>
-                <div style="color: #64748b; font-size: 0.8rem; line-height: 1.5; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: {text_primary};">Physics Glossary</h3>
+                <p style="color: {text_secondary}; font-size: 0.88rem; margin: 6px 0 12px 0;">Searchable graduate concept definitions with interactive calculators.</p>
+                <div class="math-formula">\\oint \\mathbf{{E}} \\cdot d\\mathbf{{A}} = \\frac{{Q_{{\\text{{enc}}}}}}{{\\epsilon_0}}</div>
+                <div style="color: {text_secondary}; font-size: 0.82rem; line-height: 1.6; margin-bottom: 15px;">
                     • 100+ Graduate Concepts<br>
                     • Instant LaTeX Formulas<br>
                     • Unit & Constant Converter<br>
@@ -594,10 +597,10 @@ def main():
     # =========================================================================
     # FOOTER & GITHUB / DEPLOYMENT INFO
     # =========================================================================
-    st.markdown("""
-    <div style="margin-top: 4rem; padding: 2.5rem; background: rgba(255,255,255,0.06); border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); text-align: center;">
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; font-weight: 700;">PhysicsMaster Open Source Platform</h3>
-        <p style="color: #94a3b8; font-size: 0.95rem; max-width: 650px; margin: 0 auto 1.5rem auto;">
+    st.markdown(f"""
+    <div style="margin-top: 4rem; padding: 2.5rem; background: {card_bg}; border-radius: 20px; border: 1px solid {card_border}; text-align: center;">
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; font-weight: 700; color: {text_primary};">PhysicsMaster Open Source Platform</h3>
+        <p style="color: {text_secondary}; font-size: 0.95rem; max-width: 650px; margin: 0 auto 1.5rem auto;">
             Designed for physics departments, researchers, and students globally. Pushed and configured for immediate deployment on Streamlit Cloud and Vercel.
         </p>
         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">

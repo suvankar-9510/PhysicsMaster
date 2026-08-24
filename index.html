@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Plotly.js for 3D WebGL in browser -->
     <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+    <!-- KaTeX LaTeX typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
     <style>
         :root {
             --bg-dark: #0b0f19;
@@ -421,7 +425,7 @@
                         <div class="domain-icon">🔷</div>
                         <h3>Solid State Physics</h3>
                         <p>Crystal lattices, Band Theory, Phonons, Magnetic Resonance & Dielectrics.</p>
-                        <div class="formula">E(k) = E_0 - 2t\cos(ka)</div>
+                        <div class="formula">$E(k) = E_0 - 2t\cos(ka)$</div>
                         <ul class="feature-list">
                             <li>3D First Brillouin Zones (Truncated Octahedron)</li>
                             <li>Exact Debye Heat Capacity C_V(T)</li>
@@ -438,7 +442,7 @@
                         <div class="domain-icon">🔭</div>
                         <h3>Optics & Photonics</h3>
                         <p>Jones polarization calculus, Fabry-Pérot cavities & diffraction gratings.</p>
-                        <div class="formula">n_1 \sin\theta_1 = n_2 \sin\theta_2</div>
+                        <div class="formula">$n_1 \sin\theta_1 = n_2 \sin\theta_2$</div>
                         <ul class="feature-list">
                             <li>Poincaré Sphere Polarization States</li>
                             <li>Fabry-Pérot Cavity Transmission</li>
@@ -455,7 +459,7 @@
                         <div class="domain-icon">🌊</div>
                         <h3>Waves & Oscillations</h3>
                         <p>Fourier synthesis, dispersive wavepackets & 2D Chladni resonance plates.</p>
-                        <div class="formula">v_g = d\omega/dk, \quad v_p = \omega/k</div>
+                        <div class="formula">$v_g = \frac{d\omega}{dk}, \quad v_p = \frac{\omega}{k}$</div>
                         <ul class="feature-list">
                             <li>2D Chladni Plate Eigenmodes</li>
                             <li>Dispersive Wavepacket Evolution</li>
@@ -472,7 +476,7 @@
                         <div class="domain-icon">☢️</div>
                         <h3>Nuclear Physics</h3>
                         <p>Liquid drop SEMF, Bateman decay chains & nuclear shell magic numbers.</p>
-                        <div class="formula">B(A,Z) = a_v A - a_s A^{2/3} - \dots</div>
+                        <div class="formula">$B(A,Z) = a_v A - a_s A^{2/3} - \dots$</div>
                         <ul class="feature-list">
                             <li>Semi-Empirical Mass Formula (SEMF)</li>
                             <li>Bateman Multi-Step Decay Chains</li>
@@ -489,7 +493,7 @@
                         <div class="domain-icon">❄️</div>
                         <h3>Superconductivity</h3>
                         <p>London penetration, BCS energy gap, Abrikosov vortex lattices & SQUIDs.</p>
-                        <div class="formula">\Delta(T) \approx 1.764 k_B T_c \tanh(...)</div>
+                        <div class="formula">$\Delta(T) \approx 1.764 k_B T_c \tanh\left(1.74 \sqrt{\frac{T_c}{T} - 1}\right)$</div>
                         <ul class="feature-list">
                             <li>3D Meissner Effect Field Expulsion</li>
                             <li>Ginzburg-Landau Vortex Lattice</li>
@@ -506,7 +510,7 @@
                         <div class="domain-icon">🌌</div>
                         <h3>Quantum Physics</h3>
                         <p>Schrödinger wave mechanics, barrier tunneling & 3D Bloch sphere.</p>
-                        <div class="formula">-\frac{\hbar^2}{2m}\nabla^2\psi + V\psi = E\psi</div>
+                        <div class="formula">$-\frac{\hbar^2}{2m}\nabla^2\psi + V\psi = E\psi$</div>
                         <ul class="feature-list">
                             <li>3D Bloch Qubit State Vector</li>
                             <li>Harmonic Oscillator Wavefunctions</li>
@@ -523,7 +527,7 @@
                         <div class="domain-icon">🧠</div>
                         <h3>AI Physics Assistant</h3>
                         <p>Mathematical physics solver powered by LLMs with LaTeX reasoning.</p>
-                        <div class="formula">\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0\epsilon_0\frac{\partial\mathbf{E}}{\partial t}</div>
+                        <div class="formula">$\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0\epsilon_0\frac{\partial\mathbf{E}}{\partial t}$</div>
                         <ul class="feature-list">
                             <li>Step-by-Step Mathematical Proofs</li>
                             <li>Socratic Physical Intuition</li>
@@ -540,7 +544,7 @@
                         <div class="domain-icon">📚</div>
                         <h3>Physics Glossary</h3>
                         <p>Searchable graduate concept definitions with interactive calculators.</p>
-                        <div class="formula">\oint \mathbf{E} \cdot d\mathbf{A} = \frac{Q_{\text{enc}}}{\epsilon_0}</div>
+                        <div class="formula">$\oint \mathbf{E} \cdot d\mathbf{A} = \frac{Q_{\text{enc}}}{\epsilon_0}$</div>
                         <ul class="feature-list">
                             <li>100+ Graduate Concepts</li>
                             <li>Instant LaTeX Formulas</li>

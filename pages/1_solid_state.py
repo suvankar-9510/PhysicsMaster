@@ -56,18 +56,51 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom styling
-st.markdown("""
+# Theme configuration
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = True
+
+# Sidebar theme toggle & navigation
+with st.sidebar:
+    st.markdown("### ⚙️ Laboratory Settings")
+    st.session_state.dark_mode = st.toggle("🌙 Dark Theme", value=st.session_state.dark_mode)
+    st.markdown("---")
+    st.markdown("### 📌 Quick Navigation")
+    st.markdown("""
+    - **Tab 1:** Crystal Architecture & BZ
+    - **Tab 2:** XRD & Structure Factor
+    - **Tab 3:** Phonons & Specific Heat
+    - **Tab 4:** Band Theory & Graphene
+    - **Tab 5:** Magnetic Resonance (NMR/EPR/FMR)
+    - **Tab 6:** Dielectrics & Polaritons
+    - **Tab 7:** Defects & Dislocations
+    """)
+
+# Dynamic theme styling
+dark = st.session_state.dark_mode
+card_bg = "rgba(17, 24, 39, 0.75)" if dark else "rgba(255, 255, 255, 0.88)"
+card_border = "rgba(255, 255, 255, 0.12)" if dark else "rgba(226, 232, 240, 0.8)"
+text_primary = "#f8fafc" if dark else "#0f172a"
+text_secondary = "#94a3b8" if dark else "#475569"
+theory_bg = "rgba(99, 102, 241, 0.12)" if dark else "rgba(238, 242, 255, 0.85)"
+theory_border = "#818cf8" if dark else "#4f46e5"
+metric_bg = "rgba(30, 41, 59, 0.7)" if dark else "rgba(240, 249, 255, 0.9)"
+plot_bg = 'rgba(15, 23, 42, 0.65)' if dark else 'rgba(255, 255, 255, 0.85)'
+
+st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
     
-    .main .block-container {
+    html, body, [class*="css"] {{
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }}
+    
+    .main .block-container {{
         padding-top: 1.2rem;
         padding-bottom: 3rem;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    }}
     
-    .crystal-header {
+    .crystal-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%);
         padding: 3rem 2.5rem;
         border-radius: 24px;
@@ -78,56 +111,58 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.25);
         position: relative;
         overflow: hidden;
-    }
+    }}
     
-    .section-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
-        border-radius: 20px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-    }
-    
-    .metric-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 249, 255, 0.9) 100%);
+    .metric-card {{
+        background: {metric_bg};
+        backdrop-filter: blur(12px);
         border-radius: 16px;
         padding: 1.2rem;
         text-align: center;
-        border: 1px solid #bae6fd;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);
+        border: 1px solid {card_border};
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         transition: transform 0.3s ease;
-    }
+    }}
     
-    .metric-card:hover {
+    .metric-card:hover {{
         transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.18);
-    }
+        border-color: #6366f1;
+    }}
     
-    .metric-value {
-        font-size: 1.8rem;
+    .metric-value {{
+        font-size: 1.7rem;
         font-weight: 800;
-        color: #1e40af;
+        color: {'#38bdf8' if dark else '#1e40af'};
         font-family: 'JetBrains Mono', monospace;
-    }
+    }}
     
-    .metric-label {
+    .metric-label {{
         font-size: 0.85rem;
-        color: #475569;
+        color: {text_secondary};
         font-weight: 600;
         margin-top: 4px;
-    }
+    }}
     
-    .theory-box {
-        background: rgba(99, 102, 241, 0.06);
-        border-left: 4px solid #6366f1;
-        padding: 1rem 1.4rem;
-        border-radius: 8px;
+    .theory-box {{
+        background: {theory_bg};
+        border-left: 4px solid {theory_border};
+        padding: 1.2rem 1.6rem;
+        border-radius: 10px;
         margin: 1.2rem 0;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
+        color: {text_primary};
+        font-size: 0.98rem;
+        line-height: 1.65;
+        border-top: 1px solid {card_border};
+        border-right: 1px solid {card_border};
+        border-bottom: 1px solid {card_border};
+    }}
+    
+    .theory-box h4 {{
+        margin: 0 0 0.5rem 0;
+        color: {'#a5b4fc' if dark else '#4338ca'};
+        font-weight: 700;
+        font-size: 1.1rem;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -162,11 +197,17 @@ tabs = st.tabs([
 with tabs[0]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Theoretical Foundation:</strong> A crystal is formed by periodic replication of a basis of atoms at every point of a Bravais lattice:
-        \(\mathbf{R} = u\mathbf{a}_1 + v\mathbf{a}_2 + w\mathbf{a}_3\). The reciprocal lattice vectors are defined by
-        \(\mathbf{b}_i \cdot \mathbf{a}_j = 2\pi \delta_{ij}\). The <strong>First Brillouin Zone</strong> is the Wigner-Seitz primitive cell of the reciprocal lattice.
+        <h4>Theoretical Foundation</h4>
+        A periodic crystal is formed by translating a basis of atoms across all lattice vectors of a 3D Bravais lattice:
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\mathbf{R} = u\mathbf{a}_1 + v\mathbf{a}_2 + w\mathbf{a}_3, \quad \mathbf{b}_i \cdot \mathbf{a}_j = 2\pi \delta_{ij}")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        The <strong>First Brillouin Zone</strong> is the Wigner-Seitz primitive cell of the reciprocal lattice, enclosing all uniquely defined crystal wavevectors \(\mathbf{k}\). Interplanar spacing for cubic systems is given by:
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"d_{hkl} = \frac{a}{\sqrt{h^2 + k^2 + l^2}}")
 
     col1, col2 = st.columns([1, 2.3], gap="large")
 
@@ -207,9 +248,12 @@ with tabs[0]:
         if view_mode == "3D First Brillouin Zone (Reciprocal)":
             bz_type = "FCC" if "FCC" in crystal_choice or "Diamond" in crystal_choice or "Zincblende" in crystal_choice or "NaCl" in crystal_choice else "BCC" if "BCC" in crystal_choice or "CsCl" in crystal_choice else "SC"
             fig_bz = create_3d_brillouin_zone(bz_type, k_scale=1.0)
+            fig_bz.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=plot_bg
+            )
             st.plotly_chart(fig_bz, use_container_width=True)
         else:
-            # Generate 3D crystal points based on choice
             fig_crys = go.Figure()
             
             if "Simple Cubic" in crystal_choice:
@@ -259,7 +303,7 @@ with tabs[0]:
                 n_basis = 5
                 coord_num = 12
                 pack_eff = 72.0
-            else:  # FCC default
+            else:
                 pts = generate_fcc(lattice_a, n_repeat)
                 fig_crys.add_trace(go.Scatter3d(x=pts[:,0], y=pts[:,1], z=pts[:,2], mode='markers', marker=dict(size=atom_scale*28, color='#0284c7'), name='FCC Atoms'))
                 n_basis = 4
@@ -289,6 +333,8 @@ with tabs[0]:
                 title=f"<b>3D Crystal Structure: {crystal_choice.split('(')[0]}</b>",
                 scene=dict(xaxis_title='X (Å)', yaxis_title='Y (Å)', zaxis_title='Z (Å)', aspectmode='cube'),
                 height=560,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=plot_bg,
                 margin=dict(l=0, r=0, t=50, b=0)
             )
             st.plotly_chart(fig_crys, use_container_width=True)
@@ -300,7 +346,7 @@ with tabs[0]:
         
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         with m_col1:
-            st.markdown(f"<div class='metric-card'><div class='metric-value'>{d_spacing:.3f} Å</div><div class='metric-label'>d_({mh}{mk}{ml}) Spacing</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='metric-card'><div class='metric-value'>{d_spacing:.3f} Å</div><div class='metric-label'>d_({mh}{mk}{ml}) Interplanar Spacing</div></div>", unsafe_allow_html=True)
         with m_col2:
             st.markdown(f"<div class='metric-card'><div class='metric-value'>{coord_num}</div><div class='metric-label'>Coordination Number</div></div>", unsafe_allow_html=True)
         with m_col3:
@@ -315,12 +361,17 @@ with tabs[0]:
 with tabs[1]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Laue & Bragg Diffraction Condition:</strong> Constructive interference occurs when the scattering vector equals a reciprocal lattice vector:
-        \(\Delta \mathbf{k} = \mathbf{k}' - \mathbf{k} = \mathbf{G}_{hkl}\).
-        The scattered intensity is proportional to \(|F_{hkl}|^2 = \left|\sum_j f_j e^{-2\pi i (h u_j + k v_j + l w_j)}\right|^2\).
-        Systematic absences arise from lattice symmetries (e.g. for BCC, \(h+k+l\) must be even).
+        <h4>Laue Condition & Structure Factor</h4>
+        Constructive interference occurs when the elastic scattering vector equals a reciprocal lattice vector:
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\Delta \mathbf{k} = \mathbf{k}' - \mathbf{k} = \mathbf{G}_{hkl}, \quad F_{hkl} = \sum_{j=1}^N f_j \exp\left[-2\pi i (h u_j + k v_j + l w_j)\right]")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        Diffracted peak intensities incorporate structure factors, Lorentz-polarization factor \(\text{LP}(\theta)\), and Debye-Waller thermal damping \(e^{-2W}\):
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"I_{hkl} \propto |F_{hkl}|^2 \left(\frac{1 + \cos^2 2\theta}{\sin^2\theta \cos\theta}\right) \exp\left[-2B\left(\frac{\sin\theta}{\lambda}\right)^2\right]")
 
     xrd_col1, xrd_col2 = st.columns([1, 2.3], gap="large")
 
@@ -335,9 +386,9 @@ with tabs[1]:
     with xrd_col2:
         if xrd_mode == "3D Ewald Sphere Geometry":
             fig_ewald = create_3d_ewald_sphere(xrd_lambda, xrd_a, n_nodes=3)
+            fig_ewald.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
             st.plotly_chart(fig_ewald, use_container_width=True)
         else:
-            # Generate Powder Diffractogram
             planes_list = [
                 (1,0,0), (1,1,0), (1,1,1), (2,0,0), (2,1,0), (2,1,1), (2,2,0),
                 (3,0,0), (3,1,0), (3,1,1), (2,2,2), (3,2,0), (3,2,1), (4,0,0),
@@ -352,20 +403,16 @@ with tabs[1]:
                     bragg_rad = calculate_bragg_angle(d_sp, xrd_lambda)
                     if not np.isnan(bragg_rad):
                         two_theta_deg = 2.0 * np.degrees(bragg_rad)
-                        # Multiplicity & Lorentz-Polarization factor: (1 + cos^2(2theta)) / (sin^2(theta)*cos(theta))
                         lp_factor = (1.0 + np.cos(2.0 * bragg_rad)**2) / (np.sin(bragg_rad)**2 * np.cos(bragg_rad) + 1e-4)
-                        # Thermal Debye-Waller damping: exp(-2*B * (sin(theta)/lambda)^2)
                         dw_factor = np.exp(-2.0 * temp_debye_waller * (np.sin(bragg_rad) / xrd_lambda)**2)
                         intensity = f_sq * lp_factor * dw_factor
                         xrd_peaks.append((two_theta_deg, intensity, f"({h}{k}{l})", d_sp))
                         
-            # Continuous diffractogram simulation with pseudo-Voigt profiles
             two_theta_axis = np.linspace(10, 100, 1000)
             diffractogram = np.zeros_like(two_theta_axis)
-            fwhm = 0.35  # Instrument broadening degrees
+            fwhm = 0.35
             
             for tth, intens, label, d_val in xrd_peaks:
-                # Gaussian broadening
                 diffractogram += intens * np.exp(-4.0 * np.log(2.0) * ((two_theta_axis - tth) / fwhm)**2)
                 
             diffractogram = (diffractogram / (np.max(diffractogram) + 1e-12)) * 100.0
@@ -374,11 +421,10 @@ with tabs[1]:
             fig_xrd.add_trace(go.Scatter(
                 x=two_theta_axis, y=diffractogram,
                 mode='lines',
-                line=dict(color='#2563eb', width=2.5),
+                line=dict(color='#38bdf8' if dark else '#2563eb', width=2.5),
                 name='Simulated Intensity'
             ))
             
-            # Add peak labels
             for tth, intens, label, d_val in xrd_peaks:
                 if tth <= 100:
                     fig_xrd.add_annotation(
@@ -388,7 +434,7 @@ with tabs[1]:
                         arrowhead=1,
                         arrowsize=0.8,
                         arrowcolor='#ef4444',
-                        font=dict(size=10, color='#1e293b')
+                        font=dict(size=10, color=text_primary)
                     )
                     
             fig_xrd.update_layout(
@@ -396,7 +442,7 @@ with tabs[1]:
                 xaxis_title="Diffraction Angle 2θ (degrees)",
                 yaxis_title="Relative Intensity (%)",
                 height=480,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_xrd, use_container_width=True)
@@ -408,11 +454,17 @@ with tabs[1]:
 with tabs[2]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Lattice Dynamics & Specific Heat:</strong> For a 1D diatomic chain with masses \(M_1, M_2\) and spring constant \(C\), the dispersion relation exhibits two branches:
-        \(\omega_\pm^2(k) = C\left(\frac{1}{M_1} + \frac{1}{M_2}\right) \pm C\sqrt{\left(\frac{1}{M_1} + \frac{1}{M_2}\right)^2 - \frac{4\sin^2(ka/2)}{M_1 M_2}}\).
-        The low-temperature heat capacity follows the Debye \(T^3\) law: \(C_V = \frac{12\pi^4}{5} N k_B \left(\frac{T}{\Theta_D}\right)^3\).
+        <h4>Lattice Dynamics & Debye Specific Heat</h4>
+        For a 1D diatomic chain with alternating masses \(M_1, M_2\) and interatomic spring constant \(C\):
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\omega_\pm^2(k) = C\left(\frac{1}{M_1} + \frac{1}{M_2}\right) \pm C\sqrt{\left(\frac{1}{M_1} + \frac{1}{M_2}\right)^2 - \frac{4\sin^2(ka/2)}{M_1 M_2}}")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        The exact numerical Debye heat capacity integral accounting for 3D acoustic modes:
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"C_V(T) = 9 N k_B \left(\frac{T}{\Theta_D}\right)^3 \int_0^{\Theta_D/T} \frac{x^4 e^x}{(e^x - 1)^2} dx \quad \xrightarrow{T \ll \Theta_D} \quad \frac{12\pi^4}{5} N k_B \left(\frac{T}{\Theta_D}\right)^3")
 
     ph_col1, ph_col2 = st.columns([1, 2.3], gap="large")
 
@@ -438,14 +490,13 @@ with tabs[2]:
             term_sum = spring_C * (1.0/M1_kg + 1.0/M2_kg)
             term_diff = (spring_C * (1.0/M1_kg + 1.0/M2_kg))**2 - (4.0 * spring_C**2 * np.sin(k_vals/2.0)**2) / (M1_kg * M2_kg)
             
-            omega_plus = np.sqrt(np.maximum(0.0, term_sum + np.sqrt(np.maximum(0.0, term_diff)))) / (2.0 * np.pi * 1e12)  # in THz
+            omega_plus = np.sqrt(np.maximum(0.0, term_sum + np.sqrt(np.maximum(0.0, term_diff)))) / (2.0 * np.pi * 1e12)
             omega_minus = np.sqrt(np.maximum(0.0, term_sum - np.sqrt(np.maximum(0.0, term_diff)))) / (2.0 * np.pi * 1e12)
             
             fig_ph = go.Figure()
-            fig_ph.add_trace(go.Scatter(x=k_vals/np.pi, y=omega_minus, mode='lines', name='Acoustic Branch (LA)', line=dict(color='#3b82f6', width=3.5)))
+            fig_ph.add_trace(go.Scatter(x=k_vals/np.pi, y=omega_minus, mode='lines', name='Acoustic Branch (LA)', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3.5)))
             if "Diatomic" in chain_type:
                 fig_ph.add_trace(go.Scatter(x=k_vals/np.pi, y=omega_plus, mode='lines', name='Optical Branch (LO)', line=dict(color='#ef4444', width=3.5)))
-                # Bandgap shading
                 gap_min = np.max(omega_minus)
                 gap_max = np.min(omega_plus)
                 if gap_max > gap_min:
@@ -456,7 +507,7 @@ with tabs[2]:
                 xaxis_title="Wavevector k (π/a)",
                 yaxis_title="Phonon Frequency ω (THz)",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_ph, use_container_width=True)
@@ -467,8 +518,8 @@ with tabs[2]:
             cv_einstein = np.array([calculate_einstein_heat_capacity(t, debye_T * 0.75) for t in T_array])
             
             fig_cv = go.Figure()
-            fig_cv.add_trace(go.Scatter(x=T_array, y=cv_debye, mode='lines', name='Debye Model C_V (Lattice Acoustic)', line=dict(color='#3b82f6', width=3)))
-            fig_cv.add_trace(go.Scatter(x=T_array, y=cv_einstein, mode='lines', name='Einstein Model C_V (Optical Modes)', line=dict(color='#ef4444', width=2.5, dash='dash')))
+            fig_cv.add_trace(go.Scatter(x=T_array, y=cv_debye, mode='lines', name='Debye Model C_V (Acoustic)', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3)))
+            fig_cv.add_trace(go.Scatter(x=T_array, y=cv_einstein, mode='lines', name='Einstein Model C_V (Optical)', line=dict(color='#ef4444', width=2.5, dash='dash')))
             fig_cv.add_hline(y=3.0 * 8.314, line=dict(color='#10b981', width=2, dash='dot'), annotation_text="Dulong-Petit Limit 3R = 24.94 J/mol·K")
 
             fig_cv.update_layout(
@@ -476,17 +527,15 @@ with tabs[2]:
                 xaxis_title="Temperature T (K)",
                 yaxis_title="Specific Heat C_V (J / mol·K)",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_cv, use_container_width=True)
 
         else:
-            # C/T vs T^2 low temperature experimental separation
             T_low = np.linspace(0.5, 20.0, 100)
             T_sq = T_low**2
-            # C_total = gamma*T + beta*T^3 => C/T = gamma + beta*T^2
-            beta = (12.0 * np.pi**4 / 5.0) * 8.314 / (debye_T**3) * 1e3  # in mJ/mol·K^4
+            beta = (12.0 * np.pi**4 / 5.0) * 8.314 / (debye_T**3) * 1e3
             C_over_T = gamma_el + beta * T_sq
             
             fig_sep = go.Figure()
@@ -498,7 +547,7 @@ with tabs[2]:
                 xaxis_title="T² (K²)",
                 yaxis_title="C / T (mJ / mol·K²)",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_sep, use_container_width=True)
@@ -510,12 +559,17 @@ with tabs[2]:
 with tabs[3]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Band Theory & Kronig-Penney:</strong> Periodic potential \(V(x) = V(x+a)\) opens energy bandgaps in electron energy dispersion.
-        Under the Kronig-Penney delta barrier approximation:
-        \(P\frac{\sin\alpha a}{\alpha a} + \cos\alpha a = \cos ka\).
-        Tight-binding Hamiltonians describe electron hopping between localized atomic orbitals. Graphene exhibits linear Dirac cones \(E = \pm \hbar v_F |\mathbf{q}|\).
+        <h4>Electronic Band Theory & Tight-Binding</h4>
+        In a 1D periodic delta-potential, electron energy eigenvalues obey the <strong>Kronig-Penney</strong> relation:
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"P\frac{\sin\alpha a}{\alpha a} + \cos\alpha a = \cos ka, \quad \alpha = \sqrt{\frac{2mE}{\hbar^2}}")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        In 2D Graphene, nearest-neighbor hopping on the honeycomb lattice creates massless Dirac fermion dispersion around the \(K\) and \(K'\) points:
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"E(\mathbf{k}) = \pm t \sqrt{1 + 4\cos\left(\frac{\sqrt{3}k_x a}{2}\right)\cos\left(\frac{k_y a}{2}\right) + 4\cos^2\left(\frac{k_y a}{2}\right)} \approx \pm \hbar v_F |\mathbf{q}|")
 
     band_tab1, band_tab2, band_tab3 = st.tabs(["1D Kronig-Penney Model", "2D Graphene & Tight-Binding", "Semiconductor Transport"])
 
@@ -528,17 +582,16 @@ with tabs[3]:
             kp_data = solve_kronig_penney(P_strength, e_max, n_points=800)
             
             fig_kp = make_subplots(rows=1, cols=2, subplot_titles=["Dispersion f(αa) vs αa", "Allowed Energy Bands E(k)"])
-            fig_kp.add_trace(go.Scatter(x=kp_data["alpha_a"], y=kp_data["f_val"], mode='lines', name='f(αa)', line=dict(color='#3b82f6', width=2)), row=1, col=1)
+            fig_kp.add_trace(go.Scatter(x=kp_data["alpha_a"], y=kp_data["f_val"], mode='lines', name='f(αa)', line=dict(color='#38bdf8' if dark else '#3b82f6', width=2)), row=1, col=1)
             fig_kp.add_hline(y=1.0, line=dict(color='gray', dash='dash'), row=1, col=1)
             fig_kp.add_hline(y=-1.0, line=dict(color='gray', dash='dash'), row=1, col=1)
             
-            # E vs k plot
             fig_kp.add_trace(go.Scatter(x=kp_data["ka"]/np.pi, y=kp_data["energy"], mode='markers', marker=dict(size=2.5, color='#10b981'), name='E(k) Bands'), row=1, col=2)
             fig_kp.update_xaxes(title_text="αa (Normalized Momentum)", row=1, col=1)
-            fig_kp.update_yaxes(title_text="f(αa) = P sin(αa)/αa + cos(αa)", range=[-3, 3], row=1, col=1)
+            fig_kp.update_yaxes(title_text="f(αa)", range=[-3, 3], row=1, col=1)
             fig_kp.update_xaxes(title_text="Crystal Momentum ka / π", range=[0, 1], row=1, col=2)
             fig_kp.update_yaxes(title_text="Energy E / E₀", row=1, col=2)
-            fig_kp.update_layout(height=450, title=f"<b>Kronig-Penney Band Structure (Barrier Strength P = {P_strength})</b>")
+            fig_kp.update_layout(height=450, title=f"<b>Kronig-Penney Band Structure (Barrier Strength P = {P_strength})</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_kp, use_container_width=True)
 
     with band_tab2:
@@ -555,6 +608,8 @@ with tabs[3]:
             title="<b>Graphene 2D Tight-Binding Band Structure: Relativistic Dirac Cones at K and K' Points</b>",
             scene=dict(xaxis_title='kx (Å⁻¹)', yaxis_title='ky (Å⁻¹)', zaxis_title='Energy E (eV)', camera=dict(eye=dict(x=1.6, y=1.6, z=1.2))),
             height=540,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor=plot_bg,
             margin=dict(l=0, r=0, t=50, b=0)
         )
         st.plotly_chart(fig_graphene, use_container_width=True)
@@ -586,12 +641,17 @@ with tabs[3]:
 with tabs[4]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Magnetic Resonance & Spin Dynamics:</strong>
-        Zeeman interaction splits spin energy levels: \(\Delta E = \hbar \omega_0 = g \mu_B B_0\) (for electrons) or \(\gamma \hbar B_0\) (for nuclei).
-        The macroscopic magnetization vector \(\mathbf{M}(t)\) obeys the <strong>Bloch Equations</strong>:
-        \(\frac{d\mathbf{M}}{dt} = \gamma \mathbf{M} \times \mathbf{B}_{eff} - \frac{M_x\hat{\mathbf{x}} + M_y\hat{\mathbf{y}}}{T_2} - \frac{(M_z - M_0)\hat{\mathbf{z}}}{T_1}\).
+        <h4>Bloch Dynamics & Magnetic Resonance</h4>
+        The macroscopic magnetization vector \(\mathbf{M}(t)\) under static \(B_0\hat{\mathbf{z}}\) and rotating RF \(B_1\) fields obeys the <strong>Bloch Equations</strong>:
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\frac{d\mathbf{M}}{dt} = \gamma \mathbf{M} \times \mathbf{B}_{\text{eff}} - \frac{M_x\hat{\mathbf{x}} + M_y\hat{\mathbf{y}}}{T_2} - \frac{(M_z - M_0)\hat{\mathbf{z}}}{T_1}")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        In ferromagnetic resonance (FMR), the <strong>Kittel equations</strong> describe uniform precessional modes:
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"\omega = \gamma \sqrt{B_0(B_0 + 4\pi M_s)} \quad (\text{In-Plane Film}), \quad \omega = \gamma (B_0 - 4\pi M_s) \quad (\text{Out-of-Plane Film})")
 
     mr_mode = st.radio("Select Resonance Technique:", ["3D Bloch Vector Dynamics & NMR Pulses", "Hahn Spin Echo (90°-τ-180° Refocusing)", "EPR / ESR Hyperfine Spectroscopy", "Ferromagnetic Resonance (FMR - Kittel Formula)"], horizontal=True)
 
@@ -609,6 +669,7 @@ with tabs[4]:
         with b_col2:
             bloch_data = solve_bloch_equations(t_max=60.0, n_steps=600, B1=b1_rf, T1=t1_val, T2=t2_val, pulse_duration=p_dur)
             fig_bloch_3d = plot_bloch_magnetization_trajectory(bloch_data, f"Bloch Magnetization Trajectory ({pulse_type.split(' ')[0]})")
+            fig_bloch_3d.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
             st.plotly_chart(fig_bloch_3d, use_container_width=True)
 
     elif "Hahn Spin Echo" in mr_mode:
@@ -621,7 +682,7 @@ with tabs[4]:
             echo_data = simulate_hahn_echo(tau=tau_delay, T2=t2_echo, n_isochromats=n_spins, t_max=45.0)
             
             fig_echo = go.Figure()
-            fig_echo.add_trace(go.Scatter(x=echo_data["time"], y=echo_data["echo_signal"], mode='lines', name='Total Transverse Magnetization |M_⊥(t)|', line=dict(color='#2563eb', width=3.5)))
+            fig_echo.add_trace(go.Scatter(x=echo_data["time"], y=echo_data["echo_signal"], mode='lines', name='Transverse Signal |M_⊥(t)|', line=dict(color='#38bdf8' if dark else '#2563eb', width=3.5)))
             fig_echo.add_vline(x=0, line=dict(color='#10b981', dash='dash'), annotation_text="90° Pulse")
             fig_echo.add_vline(x=tau_delay, line=dict(color='#ef4444', dash='dash'), annotation_text="180° Pulse (t = τ)")
             fig_echo.add_vline(x=2.0*tau_delay, line=dict(color='#8b5cf6', width=2), annotation_text="Hahn Echo (t = 2τ)")
@@ -631,7 +692,7 @@ with tabs[4]:
                 xaxis_title="Time t (ms)",
                 yaxis_title="Transverse Signal Amplitude",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_echo, use_container_width=True)
@@ -647,18 +708,17 @@ with tabs[4]:
             epr_spec = calculate_epr_hyperfine_spectrum(spin_I=spin_i, n_nuclei=n_nuc, a_hyperfine=a_hf, linewidth=lw)
             
             fig_epr = make_subplots(rows=2, cols=1, subplot_titles=["Absorption Spectrum A(B)", "1st Derivative Spectrum dA/dB (Standard EPR Format)"], vertical_spacing=0.15)
-            fig_epr.add_trace(go.Scatter(x=epr_spec["magnetic_field"], y=epr_spec["absorption"], mode='lines', name='Absorption', line=dict(color='#3b82f6', width=2.5)), row=1, col=1)
+            fig_epr.add_trace(go.Scatter(x=epr_spec["magnetic_field"], y=epr_spec["absorption"], mode='lines', name='Absorption', line=dict(color='#38bdf8' if dark else '#3b82f6', width=2.5)), row=1, col=1)
             fig_epr.add_trace(go.Scatter(x=epr_spec["magnetic_field"], y=epr_spec["derivative"], mode='lines', name='1st Derivative', line=dict(color='#ef4444', width=2.5)), row=2, col=1)
             
             fig_epr.update_xaxes(title_text="Magnetic Field B (Gauss)", row=2, col=1)
-            fig_epr.update_layout(height=480, title=f"<b>EPR Hyperfine Multiplet: {epr_spec['n_lines']} Peak Splitting (2nI+1)</b>")
+            fig_epr.update_layout(height=480, title=f"<b>EPR Hyperfine Multiplet: {epr_spec['n_lines']} Peak Splitting (2nI+1)</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_epr, use_container_width=True)
 
     else:
-        # FMR Kittel
         fmr_col1, fmr_col2 = st.columns([1, 2.3])
         with fmr_col1:
-            ms_val = st.slider("Saturation Magnetization 4πMs (Gauss)", 500.0, 5000.0, 1750.0, 250.0, help="YIG ≈ 1750 G, Permalloy ≈ 10000 G")
+            ms_val = st.slider("Saturation Magnetization 4πMs (Gauss)", 500.0, 5000.0, 1750.0, 250.0)
             gamma_val = st.slider("Gyromagnetic Ratio γ/2π (GHz/Tesla)", 20.0, 35.0, 28.0, 1.0)
         with fmr_col2:
             B_kG = np.linspace(0.1, 5.0, 200)
@@ -667,7 +727,7 @@ with tabs[4]:
             f_sph = calculate_fmr_kittel(B_kG * 1000.0, Ms=ms_val, gamma=gamma_val/1000.0, geometry="Sphere")
             
             fig_fmr = go.Figure()
-            fig_fmr.add_trace(go.Scatter(x=B_kG, y=f_in, mode='lines', name='In-Plane Film (Kittel): ω = γ√(B(B+4πMs))', line=dict(color='#3b82f6', width=3)))
+            fig_fmr.add_trace(go.Scatter(x=B_kG, y=f_in, mode='lines', name='In-Plane Film: ω = γ√(B(B+4πMs))', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3)))
             fig_fmr.add_trace(go.Scatter(x=B_kG, y=f_out, mode='lines', name='Out-of-Plane Film: ω = γ(B - 4πMs)', line=dict(color='#ef4444', width=3)))
             fig_fmr.add_trace(go.Scatter(x=B_kG, y=f_sph, mode='lines', name='Sphere: ω = γB', line=dict(color='#10b981', width=2.5, dash='dash')))
             
@@ -676,7 +736,7 @@ with tabs[4]:
                 xaxis_title="Applied Magnetic Field B₀ (Tesla)",
                 yaxis_title="Resonance Frequency f (GHz)",
                 height=460,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_fmr, use_container_width=True)
@@ -688,13 +748,17 @@ with tabs[4]:
 with tabs[5]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Dielectric Polarization & Reststrahlen Band:</strong>
-        Macroscopic permittivity relates to microscopic polarizabilities via the <strong>Clausius-Mossotti relation</strong>:
-        \(\frac{\varepsilon_r - 1}{\varepsilon_r + 2} = \frac{N \alpha}{3 \varepsilon_0}\).
-        In polar crystals, coupling of optical phonons with electromagnetic waves gives <strong>Phonon-Polaritons</strong> governed by the
-        <strong>Lyddane-Sachs-Teller (LST) relation</strong>: \(\frac{\varepsilon_0}{\varepsilon_\infty} = \frac{\omega_{LO}^2}{\omega_{TO}^2}\).
+        <h4>Dielectrics, Polarization & Polaritons</h4>
+        The macroscopic dielectric constant relates to microscopic polarizability via the <strong>Clausius-Mossotti relation</strong>:
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\frac{\varepsilon_r - 1}{\varepsilon_r + 2} = \frac{N \alpha}{3 \varepsilon_0}, \quad \tilde{\varepsilon}(\omega) = \varepsilon_\infty + \frac{\varepsilon_s - \varepsilon_\infty}{1 + i\omega\tau} = \varepsilon'(\omega) - i\varepsilon''(\omega)")
+    st.markdown(r"""
+    <div class="theory-box" style="margin-top: -10px;">
+        In polar crystals, coupling of optical phonons with electromagnetic photons yields <strong>Phonon-Polaritons</strong> governed by the <strong>Lyddane-Sachs-Teller (LST) relation</strong>:
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(r"\frac{\varepsilon_0}{\varepsilon_\infty} = \frac{\omega_{LO}^2}{\omega_{TO}^2}, \quad F(P) = \frac{\alpha_0(T - T_0)}{2} P^2 + \frac{\beta}{4} P^4 - E P")
 
     diel_view = st.radio(
         "Dielectric Laboratory Mode:",
@@ -711,7 +775,7 @@ with tabs[5]:
         f_axis, eps_1, eps_2 = calculate_broadband_dielectric_spectrum()
         
         fig_broad = make_subplots(rows=2, cols=1, subplot_titles=["Real Permittivity ε'(f) - Energy Storage", "Dielectric Loss ε''(f) - Energy Dissipation"], vertical_spacing=0.14)
-        fig_broad.add_trace(go.Scatter(x=f_axis, y=eps_1, mode='lines', line=dict(color='#2563eb', width=3), name="ε' (Storage)"), row=1, col=1)
+        fig_broad.add_trace(go.Scatter(x=f_axis, y=eps_1, mode='lines', line=dict(color='#38bdf8' if dark else '#2563eb', width=3), name="ε' (Storage)"), row=1, col=1)
         fig_broad.add_trace(go.Scatter(x=f_axis, y=eps_2, mode='lines', line=dict(color='#dc2626', width=2.5), name='ε" (Loss)'), row=2, col=1)
         
         fig_broad.update_xaxes(type="log", title_text="Frequency f (Hz)", row=2, col=1)
@@ -719,13 +783,12 @@ with tabs[5]:
         fig_broad.update_yaxes(title_text="ε'", row=1, col=1)
         fig_broad.update_yaxes(title_text="ε''", row=2, col=1)
         
-        # Add regime annotations
         fig_broad.add_vrect(x0=1, x1=1e3, fillcolor="rgba(59,130,246,0.08)", line_width=0, annotation_text="Interfacial", row=1, col=1)
         fig_broad.add_vrect(x0=1e3, x1=1e10, fillcolor="rgba(16,185,129,0.08)", line_width=0, annotation_text="Dipolar", row=1, col=1)
         fig_broad.add_vrect(x0=1e11, x1=1e13, fillcolor="rgba(245,158,11,0.08)", line_width=0, annotation_text="Ionic", row=1, col=1)
         fig_broad.add_vrect(x0=1e14, x1=1e16, fillcolor="rgba(239,68,68,0.08)", line_width=0, annotation_text="Electronic", row=1, col=1)
         
-        fig_broad.update_layout(height=520, title="<b>Complete Dielectric Response Spectrum from DC to Optical UV</b>")
+        fig_broad.update_layout(height=520, title="<b>Complete Dielectric Response Spectrum from DC to Optical UV</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_broad, use_container_width=True)
 
     elif "Debye Dielectric Relaxation" in diel_view:
@@ -739,14 +802,14 @@ with tabs[5]:
             deb_res = calculate_debye_dielectric_dispersion(f_range, eps_static=eps_s, eps_optical=eps_inf, tau_relaxation=10**tau_rel)
             
             fig_deb = make_subplots(rows=1, cols=2, subplot_titles=["Permittivity vs Frequency", "Cole-Cole Plot (ε'' vs ε')"])
-            fig_deb.add_trace(go.Scatter(x=deb_res["frequency"], y=deb_res["eps_real"], mode='lines', name="ε'(ω)", line=dict(color='#2563eb', width=3)), row=1, col=1)
+            fig_deb.add_trace(go.Scatter(x=deb_res["frequency"], y=deb_res["eps_real"], mode='lines', name="ε'(ω)", line=dict(color='#38bdf8' if dark else '#2563eb', width=3)), row=1, col=1)
             fig_deb.add_trace(go.Scatter(x=deb_res["frequency"], y=deb_res["eps_imag"], mode='lines', name='ε"(ω)', line=dict(color='#ef4444', width=3)), row=1, col=1)
             fig_deb.add_trace(go.Scatter(x=deb_res["eps_real"], y=deb_res["eps_imag"], mode='lines', name='Cole-Cole Arc', line=dict(color='#8b5cf6', width=3.5), fill='tozeroy', fillcolor='rgba(139,92,246,0.1)'), row=1, col=2)
             
             fig_deb.update_xaxes(type="log", title_text="Frequency (Hz)", row=1, col=1)
             fig_deb.update_xaxes(title_text="ε' (Real)", row=1, col=2)
             fig_deb.update_yaxes(title_text="ε'' (Imaginary)", row=1, col=2)
-            fig_deb.update_layout(height=460, title="<b>Debye Relaxation Equations & Semicircular Cole-Cole Arc</b>")
+            fig_deb.update_layout(height=460, title="<b>Debye Relaxation Equations & Semicircular Cole-Cole Arc</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_deb, use_container_width=True)
 
     elif "Ferroelectric P-E" in diel_view:
@@ -759,9 +822,8 @@ with tabs[5]:
             hyst_data = simulate_ferroelectric_hysteresis(E_max=50.0, Ec=e_coercive, Ps=p_sat, Pr=p_rem)
             
             fig_fe = make_subplots(rows=1, cols=2, subplot_titles=["P-E Ferroelectric Hysteresis Loop", "Landau Double-Well Free Energy F(P)"])
-            fig_fe.add_trace(go.Scatter(x=hyst_data["electric_field"], y=hyst_data["polarization"], mode='lines', name='P(E) Loop', line=dict(color='#2563eb', width=3.5)), row=1, col=1)
+            fig_fe.add_trace(go.Scatter(x=hyst_data["electric_field"], y=hyst_data["polarization"], mode='lines', name='P(E) Loop', line=dict(color='#38bdf8' if dark else '#2563eb', width=3.5)), row=1, col=1)
             
-            # Key markers
             fig_fe.add_trace(go.Scatter(x=[0, 0], y=[p_rem, -p_rem], mode='markers', name='Remnant P_r', marker=dict(size=10, color='#ef4444', symbol='diamond')), row=1, col=1)
             fig_fe.add_trace(go.Scatter(x=[e_coercive, -e_coercive], y=[0, 0], mode='markers', name='Coercive E_c', marker=dict(size=10, color='#10b981', symbol='square')), row=1, col=1)
             
@@ -771,11 +833,10 @@ with tabs[5]:
             fig_fe.update_yaxes(title_text="Polarization P (µC/cm²)", row=1, col=1)
             fig_fe.update_xaxes(title_text="Polarization P (µC/cm²)", row=1, col=2)
             fig_fe.update_yaxes(title_text="Landau Energy F(P)", row=1, col=2)
-            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Free Energy</b>")
+            fig_fe.update_layout(height=460, title="<b>Ferroelectric Domain Polarization & Landau-Devonshire Free Energy</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_fe, use_container_width=True)
 
     else:
-        # Phonon-Polaritons & LST
         pol_col1, pol_col2 = st.columns([1, 2.3])
         with pol_col1:
             w_to = st.slider("Transverse Optical ω_TO (THz)", 2.0, 15.0, 6.0, 0.5)
@@ -785,13 +846,12 @@ with tabs[5]:
             pol_data = calculate_phonon_polaritons(omega_TO=w_to, eps_static=eps_st, eps_optical=eps_opt)
             
             fig_pol = go.Figure()
-            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_lower"], mode='lines', name='Lower Polariton Branch', line=dict(color='#3b82f6', width=3.5)))
+            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_lower"], mode='lines', name='Lower Polariton Branch', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3.5)))
             fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_upper"], mode='lines', name='Upper Polariton Branch', line=dict(color='#ef4444', width=3.5)))
             fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["photon_line"], mode='lines', name='Photon Line ω = ck/√ε_∞', line=dict(color='#10b981', width=2, dash='dash')))
             fig_pol.add_hline(y=pol_data["omega_TO"], line=dict(color='#64748b', dash='dot'), annotation_text=f"ω_TO = {pol_data['omega_TO']:.1f} THz")
             fig_pol.add_hline(y=pol_data["omega_LO"], line=dict(color='#64748b', dash='dot'), annotation_text=f"ω_LO = {pol_data['omega_LO']:.1f} THz (LST Relation)")
             
-            # Reststrahlen Band
             fig_pol.add_hrect(y0=pol_data["omega_TO"], y1=pol_data["omega_LO"], fillcolor="rgba(239,68,68,0.15)", line_width=0, annotation_text="Reststrahlen Band (Polariton Gap - 100% Reflectivity)", annotation_position="top left")
             
             fig_pol.update_layout(
@@ -799,7 +859,7 @@ with tabs[5]:
                 xaxis_title="Wavevector k (Arbitrary Units)",
                 yaxis_title="Frequency ω (THz)",
                 height=480,
-                plot_bgcolor='rgba(15,23,42,0.6)' if st.session_state.dark_mode else 'rgba(255,255,255,0.7)',
+                plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_pol, use_container_width=True)
@@ -811,10 +871,11 @@ with tabs[5]:
 with tabs[6]:
     st.markdown(r"""
     <div class="theory-box">
-        <strong>Crystal Defects & Dislocations:</strong>
-        Real crystals contain 0D point defects (Schottky vacancies, Frenkel interstitials), 1D line defects (Edge dislocations with \(\mathbf{b} \perp \boldsymbol{\xi}\), Screw dislocations with \(\mathbf{b} \parallel \boldsymbol{\xi}\)), and 2D planar defects (grain boundaries, stacking faults).
+        <h4>Crystal Defects & Volterra Dislocations</h4>
+        Real crystals contain 0D point defects (Schottky vacancies, Frenkel interstitials) and 1D line defects (Edge dislocations with \(\mathbf{b} \perp \boldsymbol{\xi}\), Screw dislocations with \(\mathbf{b} \parallel \boldsymbol{\xi}\)).
     </div>
     """, unsafe_allow_html=True)
+    st.latex(r"\mathbf{u}_{\text{edge}}(r, \theta) = \frac{\mathbf{b}}{2\pi}\left[\theta + \frac{\sin 2\theta}{4(1-\nu)}\right], \quad \sigma_{xx} = -\frac{G b}{2\pi(1-\nu)} \frac{y(3x^2 + y^2)}{(x^2 + y^2)^2}")
 
     def_col1, def_col2 = st.columns([1, 2.3], gap="large")
     with def_col1:
@@ -823,4 +884,5 @@ with tabs[6]:
         
     with def_col2:
         fig_def = create_crystal_defects_visualization("Simple Cubic", a=1.0, defect_type=defect_sel)
+        fig_def.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
         st.plotly_chart(fig_def, use_container_width=True)
