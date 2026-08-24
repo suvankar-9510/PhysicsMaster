@@ -84,66 +84,70 @@ with st.sidebar:
 
 # Dynamic theme styling
 dark = st.session_state.dark_mode
-card_bg = "rgba(17, 24, 39, 0.75)" if dark else "rgba(255, 255, 255, 0.88)"
-card_border = "rgba(255, 255, 255, 0.12)" if dark else "rgba(226, 232, 240, 0.8)"
+app_bg = "linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%)" if dark else "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)"
+card_bg = "rgba(17, 24, 39, 0.82)" if dark else "rgba(255, 255, 255, 0.92)"
+card_border = "rgba(255, 255, 255, 0.12)" if dark else "rgba(203, 213, 225, 0.8)"
 text_primary = "#f8fafc" if dark else "#0f172a"
 text_secondary = "#94a3b8" if dark else "#475569"
-theory_bg = "rgba(99, 102, 241, 0.12)" if dark else "rgba(238, 242, 255, 0.85)"
+theory_bg = "rgba(99, 102, 241, 0.12)" if dark else "rgba(238, 242, 255, 0.95)"
 theory_border = "#818cf8" if dark else "#4f46e5"
-metric_bg = "rgba(30, 41, 59, 0.7)" if dark else "rgba(240, 249, 255, 0.9)"
-plot_bg = 'rgba(15, 23, 42, 0.65)' if dark else 'rgba(255, 255, 255, 0.85)'
+metric_bg = "rgba(30, 41, 59, 0.75)" if dark else "rgba(255, 255, 255, 0.95)"
+plot_bg = 'rgba(15, 23, 42, 0.7)' if dark else 'rgba(255, 255, 255, 0.95)'
+grid_color = 'rgba(255, 255, 255, 0.1)' if dark else 'rgba(0, 0, 0, 0.08)'
 
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
     
-    html, body, [class*="css"] {{
+    .stApp {{
+        background: {app_bg};
+        color: {text_primary};
         font-family: 'Plus Jakarta Sans', sans-serif;
     }}
     
     .main .block-container {{
-        padding-top: 1.2rem;
-        padding-bottom: 3rem;
+        padding-top: 1rem;
+        padding-bottom: 2.5rem;
+        max-width: 1350px;
     }}
     
     .crystal-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%);
-        padding: 3rem 2.5rem;
+        padding: 2.5rem 2rem;
         border-radius: 24px;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.8rem;
         color: white;
-        box-shadow: 0 20px 40px rgba(30, 58, 138, 0.35);
+        box-shadow: 0 15px 35px rgba(30, 58, 138, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.25);
-        position: relative;
-        overflow: hidden;
     }}
     
     .metric-card {{
         background: {metric_bg};
         backdrop-filter: blur(12px);
         border-radius: 16px;
-        padding: 1.2rem;
+        padding: 1.1rem;
         text-align: center;
         border: 1px solid {card_border};
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        transition: transform 0.25s ease;
+        margin-bottom: 0.8rem;
     }}
     
     .metric-card:hover {{
-        transform: translateY(-4px);
+        transform: translateY(-3px);
         border-color: #6366f1;
     }}
     
     .metric-value {{
-        font-size: 1.7rem;
+        font-size: 1.6rem;
         font-weight: 800;
-        color: {'#38bdf8' if dark else '#1e40af'};
+        color: {'#38bdf8' if dark else '#1d4ed8'};
         font-family: 'JetBrains Mono', monospace;
     }}
     
     .metric-label {{
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         color: {text_secondary};
         font-weight: 600;
         margin-top: 4px;
@@ -152,22 +156,47 @@ st.markdown(f"""
     .theory-box {{
         background: {theory_bg};
         border-left: 4px solid {theory_border};
-        padding: 1.2rem 1.6rem;
-        border-radius: 10px;
-        margin: 1.2rem 0;
+        padding: 1.1rem 1.4rem;
+        border-radius: 12px;
+        margin: 1rem 0;
         color: {text_primary};
-        font-size: 0.98rem;
-        line-height: 1.65;
+        font-size: 0.95rem;
+        line-height: 1.6;
         border-top: 1px solid {card_border};
         border-right: 1px solid {card_border};
         border-bottom: 1px solid {card_border};
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }}
     
     .theory-box h4 {{
-        margin: 0 0 0.5rem 0;
+        margin: 0 0 0.4rem 0;
         color: {'#a5b4fc' if dark else '#4338ca'};
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
+    }}
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 768px) {{
+        .crystal-header {{
+            padding: 1.6rem 1rem;
+            border-radius: 18px;
+        }}
+        .crystal-header h1 {{
+            font-size: 1.7rem !important;
+        }}
+        .crystal-header p {{
+            font-size: 0.92rem !important;
+        }}
+        .metric-card {{
+            padding: 0.8rem 0.5rem;
+        }}
+        .metric-value {{
+            font-size: 1.25rem !important;
+        }}
+        .theory-box {{
+            padding: 0.9rem 1rem;
+            font-size: 0.88rem;
+        }}
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -175,12 +204,12 @@ st.markdown(f"""
 # Header
 st.markdown("""
 <div class="crystal-header">
-    <div style="font-size: 2.8rem; margin-bottom: 8px;">🔷</div>
-    <h1 style="color: white; margin: 0; font-size: 2.8rem; font-weight: 800; letter-spacing: -0.5px;">
+    <div style="font-size: 2.4rem; margin-bottom: 6px;">🔷</div>
+    <h1 style="color: white; margin: 0; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.5px;">
         Solid State Physics Laboratory
     </h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 0.8rem auto 0 auto; font-size: 1.2rem; max-width: 800px; font-weight: 300;">
-        Graduate & M.Sc Level Simulations: Crystal Architecture, Reciprocal Space, Phonon Dynamics, Tight-Binding Bands, Magnetic Resonance (NMR/EPR/FMR), and Dielectric Polarization.
+    <p style="color: rgba(255,255,255,0.92); margin: 0.6rem auto 0 auto; font-size: 1.1rem; max-width: 800px; font-weight: 300;">
+        Graduate & M.Sc Level Interactive Simulation Suite with Real-Time 3D WebGL Engines and Analytical Solvers.
     </p>
 </div>
 """, unsafe_allow_html=True)

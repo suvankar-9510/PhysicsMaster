@@ -178,11 +178,26 @@ def apply_custom_css(dark_mode=False):
         width: 100%;
     }}
     
-    .stButton>button:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.55);
-        background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
-        color: white;
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 768px) {{
+        .hero-banner {{
+            padding: 2rem 1.2rem;
+            border-radius: 20px;
+        }}
+        .hero-banner h1 {{
+            font-size: 2rem !important;
+        }}
+        .hero-banner p {{
+            font-size: 1rem !important;
+        }}
+        .domain-card {{
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }}
+        .domain-icon {{
+            font-size: 2.2rem;
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
