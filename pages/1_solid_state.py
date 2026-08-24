@@ -28,7 +28,13 @@ from utils.physics import (
     calculate_broadband_dielectric_spectrum,
     calculate_clausius_mossotti,
     simulate_ferroelectric_hysteresis,
-    calculate_phonon_polaritons
+    calculate_phonon_polaritons,
+    calculate_phonon_dos,
+    calculate_fermi_surface_2d,
+    calculate_hall_effect,
+    calculate_reststrahlen_reflectivity,
+    calculate_dislocation_stress_field,
+    calculate_fid_spectrum
 )
 from utils.crystal_structures import (
     generate_simple_cubic,
@@ -310,9 +316,22 @@ with tabs[0]:
                 coord_num = 12
                 pack_eff = 74.0
 
+            # Add 3D Unit Cell Wireframe Frame
+            box_sz = n_repeat * lattice_a
+            bx = [0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, 0, None, 0, 0, None, box_sz, box_sz, None, box_sz, box_sz]
+            by = [0, 0, box_sz, box_sz, 0, 0, 0, box_sz, box_sz, 0, None, 0, box_sz, None, 0, box_sz, None, 0, box_sz]
+            bz = [0, 0, 0, 0, 0, box_sz, box_sz, box_sz, box_sz, box_sz, None, box_sz, box_sz, None, box_sz, box_sz, None, 0, 0]
+            fig_crys.add_trace(go.Scatter3d(
+                x=bx, y=by, z=bz,
+                mode='lines',
+                line=dict(color='rgba(148,163,184,0.4)', width=2, dash='dot'),
+                name='Cell Boundary',
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+
             # Miller Plane rendering
             if show_miller_plane and (mh != 0 or mk != 0 or ml != 0):
-                box_sz = n_repeat * lattice_a
                 if ml != 0:
                     u_p = np.linspace(0, box_sz, 25)
                     v_p = np.linspace(0, box_sz, 25)
@@ -475,6 +494,22 @@ with tabs[1]:
             )
             st.plotly_chart(fig_xrd, use_container_width=True)
 
+            # Indexed Bragg Reflection Peaks Table
+            if len(xrd_peaks) > 0:
+                table_rows = []
+                for tth, intens, label, d_val in sorted(xrd_peaks, key=lambda x: x[0]):
+                    if tth <= 100:
+                        table_rows.append({
+                            "Miller Index (hkl)": label,
+                            "2θ Position (deg)": f"{tth:.2f}°",
+                            "Bragg θ (deg)": f"{tth/2:.2f}°",
+                            "d-spacing (Å)": f"{d_val:.4f}",
+                            "Relative Intensity (%)": f"{(intens/np.max([p[1] for p in xrd_peaks]))*100.0:.1f}%"
+                        })
+                if len(table_rows) > 0:
+                    with st.expander("📋 View Bragg Diffraction Peak Table & Structure Factors", expanded=False):
+                        st.dataframe(pd.DataFrame(table_rows), use_container_width=True)
+
 
 # ============================================================================
 # TAB 3: PHONONS & LATTICE DYNAMICS
@@ -508,7 +543,7 @@ with tabs[2]:
         gamma_el = st.slider("Electronic Sommerfeld γ (mJ/mol·K²)", 0.5, 10.0, 1.35, 0.1)
 
     with ph_col2:
-        ph_plot_mode = st.radio("Select Physics View:", ["Phonon Dispersion Curves ω(k)", "Debye & Einstein Heat Capacity C_V(T)", "Electronic vs Lattice C/T vs T² Separation"], horizontal=True)
+        ph_plot_mode = st.radio("Select Physics View:", ["Phonon Dispersion Curves ω(k)", "Phonon Density of States g(ω)", "Debye & Einstein Heat Capacity C_V(T)", "Electronic vs Lattice C/T vs T² Separation"], horizontal=True)
 
         if "Dispersion" in ph_plot_mode:
             k_vals = np.linspace(-np.pi, np.pi, 500)
@@ -539,6 +574,17 @@ with tabs[2]:
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_ph, use_container_width=True)
+
+        elif "Density of States" in ph_plot_mode:
+            dos_data = calculate_phonon_dos(omega_max=12.0)
+            fig_dos = make_subplots(rows=1, cols=2, subplot_titles=["1D Lattice Chain (Van Hove Singularity)", "3D Debye Crystal (g(ω) ∝ ω²)"])
+            fig_dos.add_trace(go.Scatter(x=dos_data["frequency"], y=dos_data["dos_1d"], mode='lines', name='1D Van Hove DOS', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3)), row=1, col=1)
+            fig_dos.add_trace(go.Scatter(x=dos_data["frequency"], y=dos_data["dos_3d"], mode='lines', name='3D Debye DOS', line=dict(color='#10b981', width=3)), row=1, col=2)
+            fig_dos.update_xaxes(title_text="Frequency ω (THz)", row=1, col=1)
+            fig_dos.update_xaxes(title_text="Frequency ω (THz)", row=1, col=2)
+            fig_dos.update_yaxes(title_text="Density of States g(ω)", row=1, col=1)
+            fig_dos.update_layout(height=460, title="<b>Phonon Density of States g(ω): Van Hove Singularities & Dimensionality</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig_dos, use_container_width=True)
 
         elif "Heat Capacity" in ph_plot_mode:
             T_array = np.linspace(1.0, 1000.0, 200)
@@ -599,7 +645,13 @@ with tabs[3]:
     """, unsafe_allow_html=True)
     st.latex(r"E(\mathbf{k}) = \pm t \sqrt{1 + 4\cos\left(\frac{\sqrt{3}k_x a}{2}\right)\cos\left(\frac{k_y a}{2}\right) + 4\cos^2\left(\frac{k_y a}{2}\right)} \approx \pm \hbar v_F |\mathbf{q}|")
 
-    band_tab1, band_tab2, band_tab3 = st.tabs(["1D Kronig-Penney Model", "2D Graphene & Tight-Binding", "Semiconductor Transport"])
+    band_tab1, band_tab2, band_tab3, band_tab4, band_tab5 = st.tabs([
+        "1D Kronig-Penney Model",
+        "2D Graphene & Tight-Binding",
+        "2D Fermi Surfaces & Brillouin Zones",
+        "Semiconductor Transport",
+        "Hall Effect & Magnetoresistance"
+    ])
 
     with band_tab1:
         kp_col1, kp_col2 = st.columns([1, 2.3])
@@ -643,6 +695,36 @@ with tabs[3]:
         st.plotly_chart(fig_graphene, use_container_width=True)
 
     with band_tab3:
+        st.markdown("#### 🎯 2D Fermi Surface Contours & Tight-Binding Energy Contours")
+        fs_col1, fs_col2 = st.columns([1, 2.3])
+        with fs_col1:
+            ef_level = st.slider("Fermi Energy E_F (eV relative to band center)", -3.5, 3.5, 0.0, 0.25)
+            filling_type = st.radio("Lattice Energy Surface:", ["2D Square Tight-Binding E(k) = -2t(cos kx + cos ky)", "Free Electron Parabola E(k) = kx² + ky²"])
+        with fs_col2:
+            fs_data = calculate_fermi_surface_2d(k_fermi=np.sqrt(max(0.1, ef_level + 4.0)))
+            fig_fs = go.Figure()
+            
+            if "Tight-Binding" in filling_type:
+                fig_fs.add_trace(go.Contour(
+                    x=fs_data["kx"]/np.pi, y=fs_data["ky"]/np.pi, z=fs_data["E_tb"],
+                    colorscale='Viridis',
+                    contours=dict(start=-4.0, end=4.0, size=0.5, showlabels=True),
+                    name='E(k) Contours'
+                ))
+            else:
+                fig_fs.add_trace(go.Contour(
+                    x=fs_data["kx"]/np.pi, y=fs_data["ky"]/np.pi, z=fs_data["E_free"],
+                    colorscale='Plasma',
+                    contours=dict(start=0.0, end=15.0, size=1.0, showlabels=True),
+                    name='E_free Contours'
+                ))
+                
+            fig_fs.update_xaxes(title_text="kx (π/a)", range=[-1, 1])
+            fig_fs.update_yaxes(title_text="ky (π/a)", range=[-1, 1], scaleanchor="x", scaleratio=1)
+            fig_fs.update_layout(height=480, title=f"<b>Fermi Surface Topography in 2D First Brillouin Zone (E_F = {ef_level:.2f} eV)</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig_fs, use_container_width=True)
+
+    with band_tab4:
         semi_col1, semi_col2 = st.columns([1, 2.3])
         with semi_col1:
             doping_type = st.selectbox("Doping Type", ["n-type", "p-type", "Intrinsic"])
@@ -661,6 +743,26 @@ with tabs[3]:
                 st.markdown(f"<div class='metric-card'><div class='metric-value'>{p0:.2e}</div><div class='metric-label'>Hole Density p (cm⁻³)</div></div>", unsafe_allow_html=True)
             with c3:
                 st.markdown(f"<div class='metric-card'><div class='metric-value'>{sigma:.2e}</div><div class='metric-label'>Conductivity σ (S/cm)</div></div>", unsafe_allow_html=True)
+
+    with band_tab5:
+        st.markdown("#### ⚡ Hall Effect & Galvanomagnetic Transport Laboratory")
+        hall_col1, hall_col2 = st.columns([1, 2.3])
+        with hall_col1:
+            hall_curr = st.slider("Control Current I (mA)", 1.0, 50.0, 10.0, 1.0)
+            hall_B = st.slider("Magnetic Field B_z (Tesla)", 0.1, 5.0, 1.0, 0.1)
+            hall_density = st.number_input("Carrier Density n (cm⁻³)", 1e15, 1e19, 1e17, format="%.1e", key="hall_n")
+            hall_type = st.radio("Primary Carrier Type", ["electron (n-type, V_H < 0)", "hole (p-type, V_H > 0)"])
+        with hall_col2:
+            ctype_clean = "electron" if "electron" in hall_type else "hole"
+            h_res = calculate_hall_effect(current_mA=hall_curr, magnetic_field_T=hall_B, carrier_density_cm3=hall_density, carrier_type=ctype_clean)
+            
+            hm1, hm2, hm3 = st.columns(3)
+            with hm1:
+                st.markdown(f"<div class='metric-card'><div class='metric-value'>{h_res['hall_voltage_mV']:.3f} mV</div><div class='metric-label'>Transverse Hall Voltage V_H</div></div>", unsafe_allow_html=True)
+            with hm2:
+                st.markdown(f"<div class='metric-card'><div class='metric-value'>{h_res['hall_coefficient_cm3_C']:.2e}</div><div class='metric-label'>Hall Coefficient R_H (cm³/C)</div></div>", unsafe_allow_html=True)
+            with hm3:
+                st.markdown(f"<div class='metric-card'><div class='metric-value'>{h_res['conductivity_S_cm']:.2f} S/cm</div><div class='metric-label'>Drude Conductivity σ</div></div>", unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -681,7 +783,17 @@ with tabs[4]:
     """, unsafe_allow_html=True)
     st.latex(r"\omega = \gamma \sqrt{B_0(B_0 + 4\pi M_s)} \quad (\text{In-Plane Film}), \quad \omega = \gamma (B_0 - 4\pi M_s) \quad (\text{Out-of-Plane Film})")
 
-    mr_mode = st.radio("Select Resonance Technique:", ["3D Bloch Vector Dynamics & NMR Pulses", "Hahn Spin Echo (90°-τ-180° Refocusing)", "EPR / ESR Hyperfine Spectroscopy", "Ferromagnetic Resonance (FMR - Kittel Formula)"], horizontal=True)
+    mr_mode = st.radio(
+        "Select Resonance Technique:",
+        [
+            "3D Bloch Vector Dynamics & NMR Pulses",
+            "NMR Free Induction Decay (FID) & FFT Spectrum",
+            "Hahn Spin Echo (90°-τ-180° Refocusing)",
+            "EPR / ESR Hyperfine Spectroscopy",
+            "Ferromagnetic Resonance (FMR - Kittel Formula)"
+        ],
+        horizontal=True
+    )
 
     if "3D Bloch Vector" in mr_mode:
         b_col1, b_col2 = st.columns([1, 2.3], gap="large")
@@ -699,6 +811,26 @@ with tabs[4]:
             fig_bloch_3d = plot_bloch_magnetization_trajectory(bloch_data, f"Bloch Magnetization Trajectory ({pulse_type.split(' ')[0]})")
             fig_bloch_3d.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
             st.plotly_chart(fig_bloch_3d, use_container_width=True)
+
+    elif "Free Induction Decay" in mr_mode:
+        fid_col1, fid_col2 = st.columns([1, 2.3])
+        with fid_col1:
+            t1_fid = st.slider("T₁ Longitudinal (ms)", 10.0, 100.0, 40.0, 5.0, key="fid_t1")
+            t2_fid = st.slider("T₂ Transverse Dephasing (ms)", 2.0, 30.0, 10.0, 1.0, key="fid_t2")
+        with fid_col2:
+            bloch_fid = solve_bloch_equations(t_max=80.0, n_steps=800, B1=0.25, T1=t1_fid, T2=t2_fid, pulse_duration=1.57)
+            fft_res = calculate_fid_spectrum(bloch_fid)
+            
+            fig_fid = make_subplots(rows=2, cols=1, subplot_titles=["Time-Domain FID Signal Re[M_⊥(t)]", "NMR Chemical Shift Absorption Peak (FFT)"], vertical_spacing=0.16)
+            fig_fid.add_trace(go.Scatter(x=bloch_fid["time"], y=bloch_fid["Mx"], mode='lines', name='M_x(t) Signal', line=dict(color='#38bdf8' if dark else '#2563eb', width=2.5)), row=1, col=1)
+            fig_fid.add_trace(go.Scatter(x=fft_res["frequencies_kHz"], y=fft_res["fft_spectrum"], mode='lines', name='NMR Spectrum', line=dict(color='#ef4444', width=3)), row=2, col=1)
+            
+            fig_fid.update_xaxes(title_text="Acquisition Time t (ms)", row=1, col=1)
+            fig_fid.update_xaxes(title_text="Frequency Offset Δf (kHz)", range=[-5, 5], row=2, col=1)
+            fig_fid.update_yaxes(title_text="FID Amplitude", row=1, col=1)
+            fig_fid.update_yaxes(title_text="NMR Intensity (%)", row=2, col=1)
+            fig_fid.update_layout(height=480, title="<b>Fourier Transform Nuclear Magnetic Resonance (FT-NMR) Spectroscopy</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig_fid, use_container_width=True)
 
     elif "Hahn Spin Echo" in mr_mode:
         echo_col1, echo_col2 = st.columns([1, 2.3])
@@ -872,20 +1004,22 @@ with tabs[5]:
             eps_opt = st.slider("Optical Permittivity ε_∞", 1.5, 8.0, 4.0, 0.5)
         with pol_col2:
             pol_data = calculate_phonon_polaritons(omega_TO=w_to, eps_static=eps_st, eps_optical=eps_opt)
+            refl_data = calculate_reststrahlen_reflectivity(omega_TO=w_to, eps_static=eps_st, eps_optical=eps_opt)
             
-            fig_pol = go.Figure()
-            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_lower"], mode='lines', name='Lower Polariton Branch', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3.5)))
-            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_upper"], mode='lines', name='Upper Polariton Branch', line=dict(color='#ef4444', width=3.5)))
-            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["photon_line"], mode='lines', name='Photon Line ω = ck/√ε_∞', line=dict(color='#10b981', width=2, dash='dash')))
-            fig_pol.add_hline(y=pol_data["omega_TO"], line=dict(color='#64748b', dash='dot'), annotation_text=f"ω_TO = {pol_data['omega_TO']:.1f} THz")
-            fig_pol.add_hline(y=pol_data["omega_LO"], line=dict(color='#64748b', dash='dot'), annotation_text=f"ω_LO = {pol_data['omega_LO']:.1f} THz (LST Relation)")
+            fig_pol = make_subplots(rows=1, cols=2, subplot_titles=["Phonon-Polariton Dispersion ω(k)", "Reststrahlen 100% Reflectivity R(ω)"])
+            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_lower"], mode='lines', name='Lower Polariton', line=dict(color='#38bdf8' if dark else '#3b82f6', width=3)), row=1, col=1)
+            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["omega_upper"], mode='lines', name='Upper Polariton', line=dict(color='#ef4444', width=3)), row=1, col=1)
+            fig_pol.add_trace(go.Scatter(x=pol_data["k_values"], y=pol_data["photon_line"], mode='lines', name='Photon Line', line=dict(color='#10b981', width=2, dash='dash')), row=1, col=1)
             
-            fig_pol.add_hrect(y0=pol_data["omega_TO"], y1=pol_data["omega_LO"], fillcolor="rgba(239,68,68,0.15)", line_width=0, annotation_text="Reststrahlen Band (Polariton Gap - 100% Reflectivity)", annotation_position="top left")
+            fig_pol.add_trace(go.Scatter(x=refl_data["frequency"], y=refl_data["reflectivity"], mode='lines', name='Optical Reflectivity R(ω)', line=dict(color='#8b5cf6', width=3.5), fill='tozeroy', fillcolor='rgba(139,92,246,0.15)'), row=1, col=2)
+            
+            fig_pol.update_xaxes(title_text="Wavevector k (arb. units)", row=1, col=1)
+            fig_pol.update_yaxes(title_text="Frequency ω (THz)", row=1, col=1)
+            fig_pol.update_xaxes(title_text="Frequency ω (THz)", row=1, col=2)
+            fig_pol.update_yaxes(title_text="Reflectivity (%)", range=[0, 105], row=1, col=2)
             
             fig_pol.update_layout(
-                title=f"<b>Phonon-Polariton Dispersion Relation & Reststrahlen Band (LST: ω_LO/ω_TO = √(ε₀/ε_∞) = {np.sqrt(eps_st/eps_opt):.2f})</b>",
-                xaxis_title="Wavevector k (Arbitrary Units)",
-                yaxis_title="Frequency ω (THz)",
+                title=f"<b>Phonon-Polaritons & Reststrahlen Band (LST: ω_LO/ω_TO = {np.sqrt(eps_st/eps_opt):.2f})</b>",
                 height=480,
                 plot_bgcolor=plot_bg,
                 paper_bgcolor='rgba(0,0,0,0)'
@@ -905,12 +1039,37 @@ with tabs[6]:
     """, unsafe_allow_html=True)
     st.latex(r"\mathbf{u}_{\text{edge}}(r, \theta) = \frac{\mathbf{b}}{2\pi}\left[\theta + \frac{\sin 2\theta}{4(1-\nu)}\right], \quad \sigma_{xx} = -\frac{G b}{2\pi(1-\nu)} \frac{y(3x^2 + y^2)}{(x^2 + y^2)^2}")
 
-    def_col1, def_col2 = st.columns([1, 2.3], gap="large")
-    with def_col1:
-        st.markdown("#### 🔬 Defect Configuration")
-        defect_sel = st.selectbox("Defect Mechanism", ["Edge Dislocation", "Vacancy", "Interstitial", "Substitutional"])
-        
-    with def_col2:
-        fig_def = create_crystal_defects_visualization("Simple Cubic", a=1.0, defect_type=defect_sel)
-        fig_def.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
-        st.plotly_chart(fig_def, use_container_width=True)
+    defect_mode_sel = st.radio("Defect Analysis Mode:", ["3D Real-Space Crystal Defect Lattice", "2D Dislocation Stress Tensor Field (σ_xx, σ_yy, σ_xy)"], horizontal=True)
+
+    if "3D Real-Space" in defect_mode_sel:
+        def_col1, def_col2 = st.columns([1, 2.3], gap="large")
+        with def_col1:
+            st.markdown("#### 🔬 Defect Configuration")
+            defect_sel = st.selectbox("Defect Mechanism", ["Edge Dislocation", "Vacancy", "Interstitial", "Substitutional"])
+            
+        with def_col2:
+            fig_def = create_crystal_defects_visualization("Simple Cubic", a=1.0, defect_type=defect_sel)
+            fig_def.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor=plot_bg)
+            st.plotly_chart(fig_def, use_container_width=True)
+    else:
+        st_col1, st_col2 = st.columns([1, 2.3])
+        with st_col1:
+            b_burgers = st.slider("Burgers Vector b (Å)", 0.5, 4.0, 2.5, 0.5)
+            shear_mod = st.slider("Shear Modulus G (GPa)", 10.0, 100.0, 45.0, 5.0)
+            poisson_nu = st.slider("Poisson's Ratio ν", 0.15, 0.45, 0.30, 0.02)
+        with st_col2:
+            stress_data = calculate_dislocation_stress_field(b=b_burgers, nu=poisson_nu, G=shear_mod)
+            
+            fig_stress = make_subplots(rows=2, cols=2, subplot_titles=["Normal Stress σ_xx (Tensile / Compressive)", "Normal Stress σ_yy", "Shear Stress σ_xy", "Hydrostatic Pressure P"])
+            fig_stress.add_trace(go.Contour(x=stress_data["x"], y=stress_data["y"], z=stress_data["sigma_xx"], colorscale='RdBu', showscale=False), row=1, col=1)
+            fig_stress.add_trace(go.Contour(x=stress_data["x"], y=stress_data["y"], z=stress_data["sigma_yy"], colorscale='RdBu', showscale=False), row=1, col=2)
+            fig_stress.add_trace(go.Contour(x=stress_data["x"], y=stress_data["y"], z=stress_data["sigma_xy"], colorscale='Viridis', showscale=False), row=2, col=1)
+            fig_stress.add_trace(go.Contour(x=stress_data["x"], y=stress_data["y"], z=stress_data["pressure"], colorscale='Plasma', showscale=False), row=2, col=2)
+            
+            fig_stress.update_xaxes(title_text="X (Å)", row=2, col=1)
+            fig_stress.update_xaxes(title_text="X (Å)", row=2, col=2)
+            fig_stress.update_yaxes(title_text="Y (Å)", row=1, col=1)
+            fig_stress.update_yaxes(title_text="Y (Å)", row=2, col=1)
+            
+            fig_stress.update_layout(height=560, title="<b>2D Stress Field Tensor Contours Around an Edge Dislocation Core</b>", plot_bgcolor=plot_bg, paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig_stress, use_container_width=True)

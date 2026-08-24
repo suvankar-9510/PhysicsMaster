@@ -678,7 +678,174 @@ def calculate_phonon_polaritons(omega_TO=5.0, eps_static=12.0, eps_optical=9.0, 
 
 
 # ============================================================================
-# 6. GENERAL OPTICS, WAVES & NUCLEAR HELPERS
+# 6. ADVANCED GRADUATE & RESEARCH PHYSICS SOLVERS
+# ============================================================================
+
+def calculate_fermi_surface_2d(k_fermi=0.8, n_points=200):
+    """
+    Calculate 2D Fermi Surface cross-sections in reciprocal k-space.
+    Compares spherical free electron circle against tight-binding contours.
+    """
+    kx = np.linspace(-np.pi, np.pi, n_points)
+    ky = np.linspace(-np.pi, np.pi, n_points)
+    KX, KY = np.meshgrid(kx, ky)
+    
+    # Free electron parabola: E = kx^2 + ky^2
+    E_free = KX**2 + KY**2
+    
+    # 2D Square lattice tight-binding: E(k) = -2t*(cos(kx*a) + cos(ky*a))
+    E_tb = -2.0 * (np.cos(KX) + np.cos(KY))
+    
+    return {
+        "kx": kx,
+        "ky": ky,
+        "KX": KX,
+        "KY": KY,
+        "E_free": E_free,
+        "E_tb": E_tb,
+        "k_fermi": k_fermi
+    }
+
+
+def calculate_hall_effect(current_mA=10.0, magnetic_field_T=1.0, carrier_density_cm3=1e17, thickness_um=100.0, carrier_type="electron"):
+    """
+    Calculate the Hall effect parameters:
+    - Hall Voltage: V_H = (I * B) / (n * q * t)
+    - Hall Coefficient: R_H = -1 / (n * q)  [electrons] or +1 / (p * q) [holes]
+    - Hall Mobility: mu_H = |R_H| * sigma
+    """
+    q_charge = 1.602176634e-19  # Coulombs
+    I_amps = current_mA * 1e-3
+    B_tesla = magnetic_field_T
+    t_meters = thickness_um * 1e-6
+    n_m3 = carrier_density_cm3 * 1e6
+    
+    sign = -1.0 if carrier_type == "electron" else 1.0
+    R_H = sign / (n_m3 * q_charge)  # m^3 / C
+    V_H = (I_amps * B_tesla * R_H) / t_meters  # Volts
+    
+    # Typical mobility for silicon
+    mu_std = 1400.0 if carrier_type == "electron" else 450.0  # cm^2 / V*s
+    sigma = n_m3 * q_charge * (mu_std * 1e-4)  # S / m
+    
+    return {
+        "hall_voltage_mV": V_H * 1e3,
+        "hall_coefficient_cm3_C": R_H * 1e6,
+        "conductivity_S_cm": sigma * 1e-2,
+        "carrier_density": carrier_density_cm3,
+        "carrier_type": carrier_type,
+        "lorentz_force_direction": "Right" if carrier_type == "electron" else "Left"
+    }
+
+
+def calculate_phonon_dos(omega_max=10.0, n_points=300):
+    """
+    Calculate 1D and 3D Acoustic Phonon Density of States g(omega):
+    - 1D Chain: g(omega) = 2 / (pi * sqrt(omega_max^2 - omega^2))  (Van Hove singularity at omega_max)
+    - 3D Debye: g(omega) = (3 * V / 2*pi^2 * v^3) * omega^2  (Parabolic ~ omega^2)
+    """
+    omega = np.linspace(0.01, omega_max - 0.05, n_points)
+    
+    # 1D Van Hove density of states
+    dos_1d = 2.0 / (np.pi * np.sqrt(np.maximum(1e-4, omega_max**2 - omega**2)))
+    dos_1d = dos_1d / np.max(dos_1d) * 100.0
+    
+    # 3D Debye quadratic density of states
+    dos_3d = (omega / omega_max)**2 * 100.0
+    
+    return {
+        "frequency": omega,
+        "dos_1d": dos_1d,
+        "dos_3d": dos_3d,
+        "omega_max": omega_max
+    }
+
+
+def calculate_reststrahlen_reflectivity(omega_TO=6.0, eps_static=12.0, eps_optical=4.0, damping_gamma=0.2, n_points=500):
+    """
+    Calculate the complex dielectric function and normal-incidence optical reflectivity R(omega):
+    eps(omega) = eps_inf + (eps_0 - eps_inf)*omega_TO^2 / (omega_TO^2 - omega^2 - i*gamma*omega)
+    Reflectivity: R = |(sqrt(eps) - 1) / (sqrt(eps) + 1)|^2
+    """
+    omega_LO = omega_TO * np.sqrt(eps_static / eps_optical)
+    omega = np.linspace(0.5 * omega_TO, 1.5 * omega_LO, n_points)
+    
+    # Complex dielectric function with damping
+    eps_complex = eps_optical + (eps_static - eps_optical) * (omega_TO**2) / (omega_TO**2 - omega**2 - 1j * damping_gamma * omega)
+    
+    # Complex refractive index n + i*k = sqrt(eps)
+    n_complex = np.sqrt(eps_complex)
+    
+    # Normal incidence reflectivity
+    reflectivity = np.abs((n_complex - 1.0) / (n_complex + 1.0))**2
+    
+    return {
+        "frequency": omega,
+        "reflectivity": reflectivity * 100.0,
+        "eps_real": np.real(eps_complex),
+        "eps_imag": np.imag(eps_complex),
+        "omega_TO": omega_TO,
+        "omega_LO": omega_LO
+    }
+
+
+def calculate_dislocation_stress_field(b=1.0, nu=0.3, G=40.0, grid_size=3.0, n_points=100):
+    """
+    Calculate 2D stress field tensor around a Volterra edge dislocation:
+    - sigma_xx = -D * y*(3x^2 + y^2) / (x^2 + y^2)^2
+    - sigma_yy =  D * y*(x^2 - y^2) / (x^2 + y^2)^2
+    - sigma_xy =  D * x*(x^2 - y^2) / (x^2 + y^2)^2
+    where D = G * b / (2*pi*(1-nu))
+    """
+    D = (G * b) / (2.0 * np.pi * (1.0 - nu))
+    
+    x = np.linspace(-grid_size, grid_size, n_points)
+    y = np.linspace(-grid_size, grid_size, n_points)
+    X, Y = np.meshgrid(x, y)
+    
+    r_sq = X**2 + Y**2 + 1e-4  # Regularization at core
+    
+    sigma_xx = -D * Y * (3.0 * X**2 + Y**2) / (r_sq**2)
+    sigma_yy = D * Y * (X**2 - Y**2) / (r_sq**2)
+    sigma_xy = D * X * (X**2 - Y**2) / (r_sq**2)
+    
+    # Hydrostatic pressure: P = -(sigma_xx + sigma_yy) / 2
+    hydro_pressure = -(sigma_xx + sigma_yy) / 2.0
+    
+    return {
+        "x": x,
+        "y": y,
+        "X": X,
+        "Y": Y,
+        "sigma_xx": sigma_xx,
+        "sigma_yy": sigma_yy,
+        "sigma_xy": sigma_xy,
+        "pressure": hydro_pressure
+    }
+
+
+def calculate_fid_spectrum(bloch_data):
+    """
+    Compute the Fourier Transform of the transverse NMR Free Induction Decay (FID) signal:
+    M_trans(t) = M_x(t) + i * M_y(t)
+    """
+    t = bloch_data["time"]
+    dt = t[1] - t[0]
+    Mx = bloch_data["Mx"]
+    My = bloch_data["My"]
+    
+    signal = Mx + 1j * My
+    fft_vals = np.fft.fftshift(np.fft.fft(signal))
+    freqs = np.fft.fftshift(np.fft.fftfreq(len(t), d=dt * 1e-3))  # in kHz
+    
+    return {
+        "frequencies_kHz": freqs,
+        "fft_spectrum": np.abs(fft_vals) / (np.max(np.abs(fft_vals)) + 1e-12) * 100.0
+    }
+
+
+# ============================================================================
+# 7. GENERAL OPTICS, WAVES & NUCLEAR HELPERS
 # ============================================================================
 
 def calculate_snell(n1, n2, theta1):
@@ -703,3 +870,4 @@ def calculate_doppler_shift(frequency, velocity, wave_speed):
 def calculate_standing_wave(L, n, wave_speed=343.0):
     """Calculate standing wave frequencies f_n = n * v / (2 * L)."""
     return n * wave_speed / (2.0 * max(L, 1e-6))
+
