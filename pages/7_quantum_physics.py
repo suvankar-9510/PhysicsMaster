@@ -7,12 +7,16 @@ import math
 import cmath
 from scipy.special import hermite, factorial
 from scipy.integrate import quad
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(
     page_title="Quantum Physics Laboratory",
     page_icon="⚛️",
     layout="wide"
 )
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced CSS with quantum-inspired design
 st.markdown("""

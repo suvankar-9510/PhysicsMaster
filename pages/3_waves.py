@@ -6,12 +6,16 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 import time
 import math
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(
     page_title="Wave Physics Laboratory",
     page_icon="🌊",
     layout="wide"
 )
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced CSS with modern wave-inspired design
 st.markdown("""

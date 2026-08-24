@@ -7,12 +7,16 @@ from plotly.subplots import make_subplots
 import math
 import time
 import pandas as pd
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(
     page_title="Interactive Physics Glossary",
     page_icon="📚",
     layout="wide"
 )
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced CSS for glossary with better animations
 st.markdown("""

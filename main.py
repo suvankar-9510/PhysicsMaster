@@ -7,6 +7,7 @@ import math
 from utils.plotting import configure_plotting_style, apply_glassmorphic_layout
 from utils.crystal_structures import create_3d_brillouin_zone, generate_fcc
 from utils.physics import solve_bloch_equations
+from utils.theme import render_theme_sidebar
 
 # Set page configuration with improved aesthetics
 st.set_page_config(
@@ -16,201 +17,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Apply state-of-the-art Glassmorphic CSS with enhanced 3D lighting and animations
-def apply_custom_css(dark_mode=False):
-    if dark_mode:
-        bg_main = "linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%)"
-        card_bg = "rgba(17, 24, 39, 0.75)"
-        card_border = "rgba(255, 255, 255, 0.12)"
-        text_primary = "#f8fafc"
-        text_secondary = "#94a3b8"
-        hero_grad = "linear-gradient(135deg, rgba(79, 70, 229, 0.85) 0%, rgba(147, 51, 234, 0.85) 50%, rgba(219, 39, 119, 0.75) 100%)"
-        accent_color = "#38bdf8"
-    else:
-        bg_main = "linear-gradient(135deg, #f0f4fd 0%, #e2e8f0 50%, #ede9fe 100%)"
-        card_bg = "rgba(255, 255, 255, 0.82)"
-        card_border = "rgba(255, 255, 255, 0.7)"
-        text_primary = "#0f172a"
-        text_secondary = "#475569"
-        hero_grad = "linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)"
-        accent_color = "#2563eb"
-
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-    
-    html, body, [class*="css"] {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }}
-    
-    .main .block-container {{
-        padding-top: 1.2rem;
-        padding-bottom: 3rem;
-        background: {bg_main};
-        min-height: 100vh;
-    }}
-    
-    /* 3D Glassmorphism Universal Card */
-    .glass-card {{
-        background: {card_bg};
-        backdrop-filter: blur(18px) saturate(180%);
-        -webkit-backdrop-filter: blur(18px) saturate(180%);
-        border: 1px solid {card_border};
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.1), 0 0 1px 1px {card_border};
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        margin-bottom: 24px;
-        position: relative;
-        overflow: hidden;
-    }}
-    
-    .glass-card:hover {{
-        transform: translateY(-6px) scale(1.01);
-        box-shadow: 0 22px 45px -5px rgba(0, 0, 0, 0.18), 0 0 20px rgba(99, 102, 241, 0.25);
-        border-color: rgba(99, 102, 241, 0.4);
-    }}
-    
-    /* Hero Glass Banner with 3D Depth */
-    .hero-banner {{
-        background: {hero_grad};
-        backdrop-filter: blur(20px);
-        border-radius: 28px;
-        padding: 3.5rem 2.5rem;
-        margin-bottom: 2.5rem;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 25px 60px -12px rgba(79, 70, 229, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6);
-    }}
-    
-    .hero-glow {{
-        position: absolute;
-        width: 350px;
-        height: 350px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
-        top: -100px;
-        right: -80px;
-        border-radius: 50%;
-        animation: floatGlow 8s ease-in-out infinite alternate;
-        pointer-events: none;
-    }}
-    
-    @keyframes floatGlow {{
-        0% {{ transform: translate(0, 0) scale(1); }}
-        100% {{ transform: translate(-30px, 30px) scale(1.15); }}
-    }}
-    
-    /* Glowing Badges */
-    .physics-badge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 30px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        color: white;
-        backdrop-filter: blur(10px);
-        margin-right: 8px;
-        margin-bottom: 12px;
-    }}
-    
-    /* Domain Card with 3D Border Glow */
-    .domain-card {{
-        background: {card_bg};
-        backdrop-filter: blur(16px);
-        border: 1px solid {card_border};
-        border-radius: 22px;
-        padding: 24px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        transition: all 0.35s ease;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-    }}
-    
-    .domain-card:hover {{
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.14);
-        border-color: #6366f1;
-    }}
-    
-    .domain-icon {{
-        font-size: 2.8rem;
-        margin-bottom: 14px;
-        display: inline-block;
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }}
-    
-    .domain-card:hover .domain-icon {{
-        transform: scale(1.2) rotate(8deg);
-    }}
-    
-    .math-formula {{
-        font-family: 'JetBrains Mono', monospace;
-        background: rgba(99, 102, 241, 0.08);
-        border-left: 3px solid #6366f1;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        margin: 10px 0;
-        color: {text_primary};
-    }}
-    
-    /* Primary buttons */
-    .stButton>button {{
-        border-radius: 14px;
-        padding: 0.7rem 1.4rem;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none;
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.35);
-        width: 100%;
-    }}
-    
-    /* Mobile Responsive Optimizations */
-    @media (max-width: 768px) {{
-        .hero-banner {{
-            padding: 2rem 1.2rem;
-            border-radius: 20px;
-        }}
-        .hero-banner h1 {{
-            font-size: 2rem !important;
-        }}
-        .hero-banner p {{
-            font-size: 1rem !important;
-        }}
-        .domain-card {{
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 12px;
-        }}
-        .domain-icon {{
-            font-size: 2.2rem;
-        }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
 
 def main():
     configure_plotting_style()
-
-    # Session state for theme
-    if 'dark_mode' not in st.session_state:
-        st.session_state.dark_mode = True
-
-    apply_custom_css(st.session_state.dark_mode)
+    theme = render_theme_sidebar()
 
     # =========================================================================
     # SIDEBAR NAVIGATION & THEME CONTROLS
@@ -223,18 +33,8 @@ def main():
             <p style="color: rgba(255,255,255,0.85); margin: 4px 0 0 0; font-size: 0.8rem; font-weight: 500;">Graduate & M.Sc Simulator</p>
         </div>
         """, unsafe_allow_html=True)
-
-        col_t1, col_t2 = st.columns([1, 1])
-        with col_t1:
-            st.caption("🎨 Interface Mode")
-        with col_t2:
-            dark_mode = st.toggle("🌙 Dark Glass", st.session_state.dark_mode)
-            if dark_mode != st.session_state.dark_mode:
-                st.session_state.dark_mode = dark_mode
-                st.rerun()
-
-        st.markdown("---")
         st.markdown("### 🧭 Laboratory Modules")
+
 
         topic_pages = [
             {"name": "Solid State Physics", "page": "pages/1_solid_state.py", "icon": "🔷", "badge": "M.Sc Suite", "desc": "Brillouin Zones, Phonons, NMR/EPR & Dielectrics"},

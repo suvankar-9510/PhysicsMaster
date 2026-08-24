@@ -5,10 +5,14 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import math
 import pandas as pd
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(page_title="Nuclear Physics Laboratory",
                    page_icon="☢️",
                    layout="wide")
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced CSS with nuclear-inspired design
 st.markdown("""

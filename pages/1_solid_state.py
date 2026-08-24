@@ -55,6 +55,7 @@ from utils.plotting import (
     apply_glassmorphic_layout,
     plot_bloch_magnetization_trajectory
 )
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(
     page_title="Solid State Physics - Graduate & M.Sc Suite",
@@ -62,15 +63,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# Theme configuration
-if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = True
+# Apply dynamic theme and render sidebar controls
+theme = render_theme_sidebar()
+dark = theme["dark"]
+plot_bg = theme["plot_bg"]
+text_primary = theme["text_primary"]
+text_secondary = theme["text_secondary"]
+card_bg = theme["card_bg"]
+card_border = theme["card_border"]
 
-# Sidebar theme toggle & navigation
 with st.sidebar:
-    st.markdown("### ⚙️ Laboratory Settings")
-    st.session_state.dark_mode = st.toggle("🌙 Dark Theme", value=st.session_state.dark_mode)
-    st.markdown("---")
     st.markdown("### 📌 Quick Navigation")
     st.markdown("""
     - **Tab 1:** Crystal Architecture & BZ
@@ -81,125 +83,6 @@ with st.sidebar:
     - **Tab 6:** Dielectrics & Polaritons
     - **Tab 7:** Defects & Dislocations
     """)
-
-# Dynamic theme styling
-dark = st.session_state.dark_mode
-app_bg = "linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%)" if dark else "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)"
-card_bg = "rgba(17, 24, 39, 0.82)" if dark else "rgba(255, 255, 255, 0.92)"
-card_border = "rgba(255, 255, 255, 0.12)" if dark else "rgba(203, 213, 225, 0.8)"
-text_primary = "#f8fafc" if dark else "#0f172a"
-text_secondary = "#94a3b8" if dark else "#475569"
-theory_bg = "rgba(99, 102, 241, 0.12)" if dark else "rgba(238, 242, 255, 0.95)"
-theory_border = "#818cf8" if dark else "#4f46e5"
-metric_bg = "rgba(30, 41, 59, 0.75)" if dark else "rgba(255, 255, 255, 0.95)"
-plot_bg = 'rgba(15, 23, 42, 0.7)' if dark else 'rgba(255, 255, 255, 0.95)'
-grid_color = 'rgba(255, 255, 255, 0.1)' if dark else 'rgba(0, 0, 0, 0.08)'
-
-st.markdown(f"""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-    
-    .stApp {{
-        background: {app_bg};
-        color: {text_primary};
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }}
-    
-    .main .block-container {{
-        padding-top: 1rem;
-        padding-bottom: 2.5rem;
-        max-width: 1350px;
-    }}
-    
-    .crystal-header {{
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%);
-        padding: 2.5rem 2rem;
-        border-radius: 24px;
-        text-align: center;
-        margin-bottom: 1.8rem;
-        color: white;
-        box-shadow: 0 15px 35px rgba(30, 58, 138, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-    }}
-    
-    .metric-card {{
-        background: {metric_bg};
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        padding: 1.1rem;
-        text-align: center;
-        border: 1px solid {card_border};
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        transition: transform 0.25s ease;
-        margin-bottom: 0.8rem;
-    }}
-    
-    .metric-card:hover {{
-        transform: translateY(-3px);
-        border-color: #6366f1;
-    }}
-    
-    .metric-value {{
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: {'#38bdf8' if dark else '#1d4ed8'};
-        font-family: 'JetBrains Mono', monospace;
-    }}
-    
-    .metric-label {{
-        font-size: 0.82rem;
-        color: {text_secondary};
-        font-weight: 600;
-        margin-top: 4px;
-    }}
-    
-    .theory-box {{
-        background: {theory_bg};
-        border-left: 4px solid {theory_border};
-        padding: 1.1rem 1.4rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-        color: {text_primary};
-        font-size: 0.95rem;
-        line-height: 1.6;
-        border-top: 1px solid {card_border};
-        border-right: 1px solid {card_border};
-        border-bottom: 1px solid {card_border};
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }}
-    
-    .theory-box h4 {{
-        margin: 0 0 0.4rem 0;
-        color: {'#a5b4fc' if dark else '#4338ca'};
-        font-weight: 700;
-        font-size: 1.05rem;
-    }}
-
-    /* Mobile Responsive Optimizations */
-    @media (max-width: 768px) {{
-        .crystal-header {{
-            padding: 1.6rem 1rem;
-            border-radius: 18px;
-        }}
-        .crystal-header h1 {{
-            font-size: 1.7rem !important;
-        }}
-        .crystal-header p {{
-            font-size: 0.92rem !important;
-        }}
-        .metric-card {{
-            padding: 0.8rem 0.5rem;
-        }}
-        .metric-value {{
-            font-size: 1.25rem !important;
-        }}
-        .theory-box {{
-            padding: 0.9rem 1rem;
-            font-size: 0.88rem;
-        }}
-    }}
-</style>
-""", unsafe_allow_html=True)
 
 # Header
 st.markdown("""

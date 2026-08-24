@@ -6,12 +6,16 @@ import plotly.graph_objects as go
 import re
 import numpy as np
 import time
+from utils.theme import render_theme_sidebar
 
 # Set page configuration
 st.set_page_config(page_title="AI Physics Assistant",
                    page_icon="🧠",
                    layout="wide",
                    initial_sidebar_state="expanded")
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced modern CSS with minimal design
 st.markdown("""

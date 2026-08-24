@@ -5,12 +5,16 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import math
 from utils.physics import calculate_snell
+from utils.theme import render_theme_sidebar
 
 st.set_page_config(
     page_title="Optics & Photonics Laboratory",
     page_icon="🔬",
     layout="wide"
 )
+
+theme = render_theme_sidebar()
+dark = theme["dark"]
 
 # Enhanced CSS with optics-inspired design
 st.markdown("""
